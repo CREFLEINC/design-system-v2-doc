@@ -1,0 +1,129 @@
+/* ============================================================================
+   CREFLE 문서 DS — 폰트
+
+   ⚠️ 이 파일에는 `@import` 가 하나도 없다. 앞으로도 넣지 말 것.
+
+   왜: 이 시스템의 전신인 `colors_and_type.css` 는 8행에
+       "@import rules must precede @font-face per CSS spec" 이라고 적어놓고
+       36행에서 그 규칙을 어겼다(@font-face 5개 뒤에 @import). CSS 스펙상 무효라
+       파서가 조용히 버렸고, 그 결과 Material Symbols 는 **한 번도 로드된 적이 없다**.
+       실측(Chrome, 네트워크 있음): 페이스 0개 등록, <span class="material-symbols-rounded">
+       photo_camera</span> 가 글리프 대신 literal 문자열(94px 폭)로 렌더.
+       규칙을 알고 적어둔 사람조차 27줄 뒤에 어겼다 → 규율이 아니라 구조로 막는다.
+
+   두 겹으로 막는다:
+     1) 이 파일에 @import 를 쓰지 않는다 (src: url() 로 로컬 파일만 직접 참조)
+     2) `scripts/check-fonts.mjs` 가 @import 가 @font-face 뒤에 오면 게이트를 실패시킨다
+     3) `scripts/build.mjs` 가 CSS 를 평평하게 concat 한다 — 산출물에 @import 자체가 없다
+
+   ⚠️ 네트워크 URL 금지. 모든 src 는 로컬 woff2 여야 한다.
+
+   왜: CREFLE reports 의 업로드 PDF 렌더러는 `network_mode: "none"` 격리 컨테이너에서
+       `file://` 로 렌더한다(docker-compose.yml 실측). CDN 폰트는 거기서 100% 실패한다.
+       그리고 OS 폴백 스택(ui-monospace, Menlo, Consolas …)도 답이 아니다 — Ubuntu 엔
+       셋 다 없어 DejaVu 로 떨어진다. 실제로 발행된 OhMyFactory_PoC_기획서_v2.pdf 에는
+       **Menlo-Bold(macOS 전용)** 가 임베드돼 있다 = 그 PDF 는 재현 불가능하다.
+       명명하는 모든 서체를 번들하고, OS 별로 다르게 해석될 폴백을 두지 않는다.
+   ============================================================================ */
+
+/* ── Spoqa Han Sans Neo — 파운데이션 잠긴 미러 (본문·제목 전부) ────────────
+   font-display: block 을 쓴다 (swap 아님).
+   swap 은 FOUT 를 만들고, Playwright 가 그 폴백 프레임을 PDF 로 찍을 수 있다.
+   block 은 폰트를 기다린다 — 화면 UX 보다 인쇄 결정성이 우선인 문서에선 이게 맞다. */
+
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 100;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/SpoqaHanSansNeo-Thin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 300;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/SpoqaHanSansNeo-Light.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/SpoqaHanSansNeo-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/SpoqaHanSansNeo-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/SpoqaHanSansNeo-Bold.woff2') format('woff2');
+}
+
+/* ── JetBrains Mono — 도메인 번들 (코드·수치·eyebrow) ──────────────────────
+   파운데이션엔 mono 가 없다. 두 번째 도메인이 요구하면 그때 승격한다
+   (docs/domain-ds-guide.md §"신규 토큰의 자리"). 굵기는 문서에 실제로 쓰는 3종만:
+   400 본문 코드 / 500 라벨·eyebrow / 700 강조. */
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
+/* ── Material Symbols Rounded — 파운데이션 잠긴 미러 ───────────────────────
+   전신에서 이 폰트가 실제로 깨져 있던 바로 그 지점이다. 이제 로컬 woff2 를
+   @font-face 로 직접 선언하므로 @import 순서 문제가 존재하지 않는다. */
+
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./foundation/fonts/MaterialSymbolsRounded.woff2') format('woff2');
+}
+
+/* Material Symbols 는 리거처로 글리프를 찾는다 — 리거처가 꺼지면 아이콘 이름이
+   그대로 텍스트로 렌더된다(전신의 증상과 똑같이 보이지만 원인은 다르다).
+   `.ms` 는 짧은 별칭. */
+.material-symbols-rounded,
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: var(--icon-md);
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}

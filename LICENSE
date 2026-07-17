@@ -1,0 +1,50 @@
+Copyright (c) 2026 CREFLE Inc. (크레플 주식회사)
+All rights reserved.
+
+This software and its source code are proprietary and confidential.
+
+Permission is NOT granted to use, copy, modify, merge, publish, distribute,
+sublicense, or sell copies of this software, in whole or in part, except with
+the prior written permission of CREFLE Inc.
+
+The source is published for reference and transparency only.
+
+---
+
+THIRD-PARTY ASSETS
+
+This repository bundles font files that are licensed separately. The fonts are
+distributed in more than one place, and EVERY copy carries the full license
+text alongside it:
+
+  Spoqa Han Sans Neo (Thin/Light/Regular/Medium/Bold)
+    SIL Open Font License 1.1
+    styles/foundation/fonts/LICENSE-SpoqaHanSansNeo.txt   (locked foundation mirror)
+    dist/crefle-doc/fonts/LICENSE-SpoqaHanSansNeo.txt     (vendorable bundle)
+
+  Material Symbols Rounded
+    Apache License 2.0
+    styles/foundation/fonts/LICENSE-MaterialSymbols.txt   (locked foundation mirror)
+    dist/crefle-doc/fonts/LICENSE-MaterialSymbols.txt     (vendorable bundle)
+
+  JetBrains Mono (Regular/Bold)
+    SIL Open Font License 1.1
+    styles/fonts/LICENSE-JetBrainsMono.txt                (doc-domain source)
+    dist/crefle-doc/fonts/LICENSE-JetBrainsMono.txt       (vendorable bundle)
+
+The "All rights reserved" statement above does not apply to these fonts.
+
+`scripts/check-licenses.mjs` enforces this: it fails the build if any directory
+containing a font binary lacks its license text. A document built with
+`build --inline` embeds the fonts as base64 data: URIs — which is also
+redistribution — so the build injects the same license texts into the generated
+HTML as a comment block.
+
+Do not remove a LICENSE-*.txt without removing the font binaries beside it.
+A font copy without its license is unauthorised redistribution.
+
+---
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.

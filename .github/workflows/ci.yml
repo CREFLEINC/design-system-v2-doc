@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # 잡 이름 'check' 가 그대로 status check 컨텍스트 이름이 된다 (branch protection 이 이 이름을 참조).
+  # 바꾸지 말 것 — 바꾸면 protection 이 존재하지 않는 컨텍스트를 기다리며 모든 PR 이 영원히 막힌다.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      # 파운데이션 repo 에 접근하지 않는다. lock 파일과 디스크만 대조한다.
+      # 덕분에 파운데이션이 private 이어도 CI 에 자격증명이 필요 없다.
+      # (check:foundation:upstream 은 네트워크가 필요하므로 `check` 에 들어있지 않다.)
+      - run: npm run check

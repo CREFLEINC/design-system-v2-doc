@@ -1,0 +1,48 @@
+{
+  "//": [
+    "TypeScript 를 소스 언어로 쓰지 않는다 — 타입 검사기로만 쓴다.",
+    "",
+    "왜: 배포하는 산출물은 file:// 페이지에서 <script src> 로 로드되는 평범한 JS 여야 한다.",
+    "  TS 로 작성하면 dist/deck-stage.js ≠ src/deck-stage.js 가 되고, 그러면",
+    "  check:dist 의 재현성이 npm ci 뿐 아니라 tsc/번들러의 정확한 버전에까지 종속된다.",
+    "  게다가 아무도 이 패키지에서 타입을 import 하지 않는다 — 소비자는 <script src> 와",
+    "  HTML 속성만 쓴다. 그래서 .js + JSDoc 으로 쓰고 여기서 checkJs 로 검사한다.",
+    "  결과: dist 의 JS 는 src 의 바이트 동일 복사본이고 재현성이 자명하다."
+  ],
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.js", "scripts/**/*.mjs"],
+
+  "//exclude": [
+    "아래 6개는 design-system-v2-webui 에서 **바이트 그대로** 이식한 파일이다.",
+    "파운데이션 docs/domain-ds-guide.md 가 '그대로' 베끼라고 명시했고(표 §복사할 것),",
+    "실제로 diff -q 로 원본과 동일함을 확인했다. 그 동일성이 기능이다 — 업스트림에서",
+    "고쳐지면 재복사만 하면 된다. 여기서 JSDoc 을 달면 매 재복사마다 재주석이 필요해지고",
+    "'그대로'가 깨진다. 이것들은 우리 코드가 아니라 벤더링된 상류 코드다 —",
+    "파운데이션 미러와 같은 취급을 한다: 고치지 않고, 린트하지 않는다.",
+    "대신 함께 이식한 자체 테스트(foundation-lock/sync-foundation/check-foundation.test.mjs,",
+    "11개)가 검증한다. 그 테스트도 npm test 로 실제로 돈다.",
+    "",
+    "우리가 소유한 스크립트(build/check-tokens/check-fonts/check-licenses)는 검사 대상이다."
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts/foundation-lock.mjs",
+    "scripts/sync-foundation.mjs",
+    "scripts/check-foundation.mjs",
+    "scripts/foundation-lock.test.mjs",
+    "scripts/sync-foundation.test.mjs",
+    "scripts/check-foundation.test.mjs"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@crefle/doc",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "description": "CREFLE 문서 디자인 시스템 — 보고서·연구노트·회의록·발표(HTML). 파운데이션 design-system-v2 소비.",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:tokens": "node scripts/check-tokens.mjs",
+    "check:foundation": "node scripts/check-foundation.mjs",
+    "check:foundation:upstream": "node scripts/check-foundation.mjs --upstream",
+    "check:licenses": "node scripts/check-licenses.mjs",
+    "check:fonts": "node scripts/check-fonts.mjs",
+    "check:dist": "node scripts/build.mjs && git diff --exit-code -- dist/",
+    "sync-foundation": "node scripts/sync-foundation.mjs",
+    "check": "npm run check:foundation && npm run check:licenses && npm run check:fonts && npm run typecheck && npm test && npm run lint:tokens && npm run check:dist"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  }
+}

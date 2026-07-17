@@ -1,0 +1,411 @@
+/* CREFLE 문서 디자인 시스템 — 생성물. 직접 수정하지 마세요.
+   출처: CREFLEINC/design-system-v2-doc  ·  scripts/build.mjs 가 생성합니다.
+   이 파일은 평평합니다 — @import 가 없습니다. 그건 의도입니다(전신의 @import 순서
+   버그로 아이콘이 죽은 적이 있습니다). 여기에 @import 를 추가하지 마세요. */
+
+/* ───── foundation/tokens.css ───── */
+/* ============================================================================
+   CREFLE Design System — Stage 1 Foundation Tokens
+   Brand + Colors only (1단계 공통 기반)
+
+   회사: 크레플 주식회사 / CREFLE Inc.
+   출처: CREFLE Presentation Design System (viskit_killer / Material Design 3 파생)
+   기본 강조(primary) = 브랜드 레드 #C9252C  ← RangKim 확정 (2026-06-25)
+
+   사용법: 빌드하는 모든 HTML/CSS에서 이 파일을 import 하고,
+   하드코딩된 hex 대신 var(--token) 만 사용한다. (raw hex 금지)
+   ============================================================================ */
+
+:root {
+
+  /* ==========================================================================
+     1. BRAND IDENTITY  — CREFLE 로고에서 샘플링
+     ========================================================================== */
+
+  /* 브랜드 레드 — 회사 공통 기본 강조색 */
+  --brand-red:        #C9252C;   /* 기본 / primary           */
+  --brand-red-dark:   #A81E24;   /* hover                    */
+  --brand-red-deep:   #7D161B;   /* on-dark accent / press   */
+  --brand-red-soft:   #F4DDDE;   /* container, subtle bg     */
+
+  /* 차콜 */
+  --brand-charcoal:      #3E4146; /* 기본 차콜               */
+  --brand-charcoal-deep: #1F2125; /* full-bleed dark        */
+
+  /* 다크 배경 그라디언트 (섹션 구분 / 타이틀 슬라이드)
+     차콜 → 레드 램프. 정확한 stop은 큐레이션 카드 기준으로 추후 조정 가능. */
+  --brand-gradient-dark: linear-gradient(135deg,
+                           #1F2125 0%,
+                           #7D161B 60%,
+                           #C9252C 100%);
+
+  /* ==========================================================================
+     2. PRIMARY  — 공통 주색 별칭 (= 브랜드 레드)
+     모든 UI/슬라이드 강조는 --brand-* 가 아니라 이 별칭을 통해 참조하면
+     향후 주색 변경 시 한 곳만 고치면 된다.
+     ========================================================================== */
+
+  --primary:            var(--brand-red);
+  --primary-hover:      var(--brand-red-dark);
+  --primary-press:      var(--brand-red-deep);
+  --primary-container:  var(--brand-red-soft);
+  --on-primary:         #FFFFFF;
+
+  /* ==========================================================================
+     3. PRODUCT UI PRIMARY  — viskit_killer 제품 전용
+     M3 파생 인디고. 제품 목업 안에서만 사용하고,
+     슬라이드·발표·공통 자료의 강조색으로는 쓰지 않는다.
+     ========================================================================== */
+
+  --product-primary: #4758A9;
+
+  /* ==========================================================================
+     4. NEUTRAL SURFACES  — surface ladder + foreground + outline
+     순수 #FFFFFF 금지. 약한 마젠타 기 도는 warm-cool white 사용.
+     ========================================================================== */
+
+  --surface:                 #FBF8FD;  /* 기본 표면              */
+  --surface-container-low:   #F5F2F7;
+  --surface-container:       #EFEDF1;
+  --surface-container-high:  #E9E7EB;
+
+  --on-surface:          #1B1B1F;  /* 본문 텍스트            */
+  --on-surface-variant:  #2D2C33;  /* 보조 텍스트            */
+  --on-surface-muted:    #77767F;  /* 약한 텍스트 / 라벨     */
+  --outline-variant:     #C6C5D0;  /* 카드 1px 보더          */
+
+  /* ==========================================================================
+     5. SEMANTIC  — 개념 동등 = 색 동등 (라이트/다크 고정)
+     "양품"은 어디서나 success, "불량"은 어디서나 error.
+     장식용으로 새 hex 만들지 말 것.
+     ========================================================================== */
+
+  --semantic-success:  #1F883D;  /* 양품 / Pass / OK       */
+  --semantic-error:    #B3261E;  /* 불량 / Fail / NG       */
+  --semantic-warning:  #E8A100;  /* 주의 / Attention       */
+  --semantic-info:     #0B57D0;  /* 정보 / Info            */
+  --semantic-idle:     #6E7781;  /* 대기 / Idle            */
+
+  /* ==========================================================================
+     6. STATE LAYERS  — M3 상태 레이어 알파 (overlay 용)
+     hover 8% · focus 12% + 2px ring · press 12% · disabled 38%
+     darken/lighten 이나 shrink-on-press 금지. 상태 레이어 패턴만 사용.
+     ========================================================================== */
+
+  --state-hover:    rgba(201, 37, 44, 0.08);  /* primary @ 8%   */
+  --state-focus:    rgba(201, 37, 44, 0.12);  /* primary @ 12%  */
+  --state-press:    rgba(201, 37, 44, 0.12);  /* primary @ 12%  */
+  --state-disabled-fill: rgba(27, 27, 31, 0.12);  /* on-surface @ 12% */
+  --state-disabled-text: rgba(27, 27, 31, 0.38);  /* on-surface @ 38% */
+}
+
+/* ───── doc-tokens.css ───── */
+/* ============================================================================
+   CREFLE 문서 DS — 도메인 토큰 레이어
+
+   파운데이션(styles/foundation/tokens.css)이 **색**의 단일 진실원이다.
+   이 파일은 파운데이션 Stage 1 에 없는 것만 채운다: 타입 · 공간 · 형태 · 고도 · 모션 · 차트.
+
+   ┌─ 이 파일의 첫 번째 규칙 ────────────────────────────────────────────────┐
+   │  --primary 를 정의하지 않는다. --surface 도, --semantic-* 도, --brand-* 도.  │
+   │  전부 잠긴 미러에서 온다.                                                  │
+   │                                                                          │
+   │  왜: CREFLE 문서의 브랜드 강조색은 한때 네 갈래였다 —                       │
+   │    파운데이션 #C9252C · crefle_designer 스킬 #4758A9 · 그 손복사본 #4758A9 ·  │
+   │    그리고 토큰조차 없이 CDN Pretendard 를 쓴 실제 발행 문서들.               │
+   │  원인은 하나: 복사본이 있었고 원본과 이어져 있지 않았다.                      │
+   │  여기서 --primary 를 정의하고 싶어지는 순간이 다섯 번째 갈래가 생기는 순간이다. │
+   │  scripts/check-tokens.mjs 가 막는다.                                       │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+   출처: colors_and_type.css (CREFLE Presentation Design System) 의 타입·형태 계보를
+         잇는다. 그 파일의 문서 스케일은 문서화된 spec mandate 다 —
+         "제목 20 / 본문 16 / 본문 작은 12". 아래에서 그 세 앵커를 보존한 채 확장한다.
+   ============================================================================ */
+
+:root {
+  /* ==========================================================================
+     1. 파운데이션 보정 — 최소한으로, 근거를 남기고
+     ========================================================================== */
+
+  /* --on-surface-muted 오버라이드.
+     파운데이션 값 #77767F 는 WCAG AA 미달이다. 실측(2026-07-17):
+        --surface(#FBF8FD)              4.26:1  ❌
+        --surface-container-low         4.04:1  ❌
+        --surface-container             3.86:1  ❌
+        --surface-container-high        3.65:1  ❌   ← 네 표면 전부 미달
+     본문 AA 기준은 4.5:1. 문서는 읽고 인쇄하는 물건이라 UI 보다 더 아프다.
+     #65646D 는 네 표면 전부 AA 를 통과하는(최악 4.75:1) **최소 변경**이다.
+     → 파운데이션 업스트림 이슈 대상. 승격되면 이 줄을 지운다. */
+  --on-surface-muted: #65646D;
+
+  /* --outline: 파운데이션엔 --outline-variant(#C6C5D0) 만 있고 --outline 이 없다.
+     web-ui 도 같은 구멍을 보고했다(가이드 §"웹에서 나온 승격 후보").
+     값은 colors_and_type.css 계보를 따른다. 승격 후보. */
+  --outline: #767680;
+
+  /* ==========================================================================
+     2. TYPE — 서체
+     폰트 패밀리는 styles/fonts.css 가 @font-face 로 선언한다.
+     ⚠️ 폴백에 OS 의존 서체(Menlo/Consolas/SFMono/ui-monospace)를 두지 않는다 —
+        Ubuntu 엔 없어 DejaVu 로 떨어진다. 발행된 OhMyFactory_PoC_기획서_v2.pdf 에
+        Menlo-Bold(macOS 전용)가 임베드된 것이 그 증거다 = 재현 불가능한 PDF.
+        번들한 서체만 명명한다. check-fonts.mjs 가 강제한다.
+     ========================================================================== */
+
+  --font-sans: 'Spoqa Han Sans Neo', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-icon: 'Material Symbols Rounded';
+
+  /* ── 문서 스케일 ────────────────────────────────────────────────────────
+     spec mandate 세 앵커(20/16/12)를 보존하고 6단계로 확장한다.
+     3단계는 표지·장·절·본문·캡션·각주를 가진 보고서엔 부족하다.
+     비율 ~1.25 (12 → 16 → 20 → 24 → 30).
+
+     시맨틱 HTML 매핑 (styles/doc.css 가 기본값으로 적용):
+        <h1> 문서 제목   30px      <h2> 장   24px
+        <h3> 절   20px  ← 앵커     <h4> 항   17px
+        <p>  본문 16px  ← 앵커     <small>·<figcaption>·각주  12px  ← 앵커 */
+
+  --text-doc-title: 30px;   /* h1 — 문서 제목 (한 문서에 하나)   */
+  --text-chapter:   24px;   /* h2 — 장                          */
+  --text-section:   20px;   /* h3 — 절   ← spec mandate "제목"   */
+  --text-sub:       17px;   /* h4 — 항                          */
+  --text-body:      16px;   /*      본문 ← spec mandate "본문"   */
+  --text-small:     12px;   /*      캡션·각주 ← spec mandate "본문 작은" */
+  --text-label:     14px;   /*      라벨·버튼 (M3 label-large)   */
+
+  /* 아이콘 크기 — M3 (styles/fonts.css 의 .material-symbols-rounded 가 --icon-md 를 쓴다) */
+  --icon-sm: 20px;   /* 버튼 안        */
+  --icon-md: 24px;   /* 기본 · 본문 옆 */
+  --icon-lg: 40px;   /* 히어로         */
+
+  /* ── 슬라이드 스케일 (1920×1080 투사) ──────────────────────────────────
+     20/16/12 는 투사하면 읽을 수 없다. colors_and_type.css 의 검증된 값 그대로.
+     .doc 과 deck-stage 스코프로 격리되므로 한 페이지에 공존해도 안전하다. */
+
+  --slide-display: 96px;   /* 히어로 / 타이틀 슬라이드 */
+  --slide-h1:      64px;   /* 슬라이드 제목            */
+  --slide-h2:      40px;   /* 섹션 헤더                */
+  --slide-h3:      28px;   /* 서브섹션                 */
+  --slide-body:    24px;   /* 본문 — 투사 최소 가독    */
+  --slide-small:   18px;   /* 캡션 · 각주              */
+  --slide-eyebrow: 16px;   /* 대문자 eyebrow           */
+
+  /* ── 굵기 — Spoqa 는 100/300/400/500/700 만 제공한다 ─────────────────
+     600·800 을 쓰면 브라우저가 합성(faux bold)해 인쇄에서 뭉갠다. */
+  --w-thin:    100;
+  --w-light:   300;
+  --w-regular: 400;
+  --w-medium:  500;
+  --w-bold:    700;
+
+  /* ── 행간 · 자간 ────────────────────────────────────────────────────── */
+  --leading-tight: 1.15;   /* 큰 제목            */
+  --leading-snug:  1.35;   /* 작은 제목 · 캡션   */
+  --leading-body:  1.6;    /* 본문 — 문서는 읽는 물건이라 UI(1.5)보다 넉넉히 */
+  --leading-loose: 1.75;   /* 긴 인용 · 각주     */
+  --tracking-tight:   -0.02em;   /* 큰 제목  */
+  --tracking-normal:  0;
+  --tracking-eyebrow: 0.14em;    /* 대문자   */
+
+  /* ==========================================================================
+     3. SHAPE — M3 코너 시스템 (README §Rule 3 계보)
+     무거운 보더와 깊은 그림자를 함께 쓰지 않는다 — 하나만 고른다.
+     ========================================================================== */
+  --radius-none: 0;
+  --radius-xs:   4px;
+  --radius-sm:   8px;     /* 뱃지 · 칩 · 상태 태그      */
+  --radius-md:   12px;    /* 카드 · 콘텐츠 블록 (기본)  */
+  --radius-lg:   16px;    /* 큰 미디어 · 일러스트       */
+  --radius-xl:   28px;    /* 히어로 카드 · 전면 시트    */
+  --radius-pill: 9999px;  /* 버튼 · 필 칩               */
+
+  /* ==========================================================================
+     4. ELEVATION — M3 Level 0–5
+     ========================================================================== */
+  --elev-0: none;
+  --elev-1: 0 1px 2px 0 rgba(0,0,0,0.10), 0 1px 3px 1px rgba(0,0,0,0.06);
+  --elev-2: 0 1px 2px 0 rgba(0,0,0,0.10), 0 2px 6px 2px rgba(0,0,0,0.08);
+  --elev-3: 0 4px 8px 3px rgba(0,0,0,0.08), 0 1px 3px 0 rgba(0,0,0,0.12);
+  --elev-4: 0 6px 10px 4px rgba(0,0,0,0.10), 0 2px 3px 0 rgba(0,0,0,0.14);
+  --elev-5: 0 8px 12px 6px rgba(0,0,0,0.10), 0 4px 4px 0 rgba(0,0,0,0.16);
+
+  /* 이미지 웰 · 코드 블록처럼 "페이지에 파인" 표면 */
+  --inset-1: inset 0 1px 0 0 rgba(255,255,255,0.6),
+             inset 0 -1px 0 0 rgba(0,0,0,0.04);
+
+  /* ==========================================================================
+     5. SPACING — 4pt 그리드. 눈대중으로 조합하지 않는다.
+     ========================================================================== */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px;  --s-6: 24px;  --s-8: 32px;  --s-10: 40px;
+  --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+
+  /* 슬라이드 안전 영역 (1920×1080) */
+  --slide-gutter:  80px;   /* 가장자리 최소 여백 */
+  --slide-min-gap: 24px;   /* 의미 있는 요소 사이 최소 간격 (README §3) */
+
+  /* 문서 지면 */
+  --doc-measure: 78ch;     /* 본문 최대 줄길이 — 넘으면 읽기 어렵다 */
+  --doc-page-margin: 20mm; /* @page 여백 (styles/print.css) */
+
+  /* ==========================================================================
+     6. MOTION — M3 표준 이징
+     문서는 대부분 정적이다. 모션은 흐름 설명(워크플로우 다이어그램)에만.
+     인쇄·PDF 에선 전부 무의미하므로 print.css 가 죽인다.
+     ========================================================================== */
+  --ease-standard:   cubic-bezier(0.2, 0.0, 0, 1.0);
+  --ease-decelerate: cubic-bezier(0.0, 0.0, 0, 1.0);
+  --ease-accelerate: cubic-bezier(0.3, 0.0, 1.0, 1.0);
+  --dur-short:  150ms;
+  --dur-medium: 250ms;
+  --dur-long:   400ms;
+  --dur-emph:   500ms;
+
+  /* ==========================================================================
+     7. CHART — 시리즈 팔레트
+     web-ui 계보: primary 레드 + 차콜 사다리. 장식이 아니라 데이터 인코딩이다.
+     ⚠️ 미결(Phase 3): 거의 단색이라 인쇄된 5조각 원형 차트에서 구분이 약할 수 있다.
+        dataviz 스킬의 대비 공식으로 검증하고 필요하면 범주형으로 확장한다.
+        --chart-1 은 var(--primary) 이므로 파운데이션이 주색을 바꾸면 자동으로 따라간다.
+     ========================================================================== */
+  --chart-1: var(--primary);
+  --chart-2: #3E4146;
+  --chart-3: #63666D;
+  --chart-4: #8A8D94;
+  --chart-5: #B4B6BC;
+  --chart-grid: var(--outline-variant);
+  --chart-axis: var(--on-surface-muted);
+}
+
+/* ───── fonts.css ───── */
+/* ============================================================================
+   CREFLE 문서 DS — 폰트
+
+   ⚠️ 이 파일에는 `@import` 가 하나도 없다. 앞으로도 넣지 말 것.
+
+   왜: 이 시스템의 전신인 `colors_and_type.css` 는 8행에
+       "@import rules must precede @font-face per CSS spec" 이라고 적어놓고
+       36행에서 그 규칙을 어겼다(@font-face 5개 뒤에 @import). CSS 스펙상 무효라
+       파서가 조용히 버렸고, 그 결과 Material Symbols 는 **한 번도 로드된 적이 없다**.
+       실측(Chrome, 네트워크 있음): 페이스 0개 등록, <span class="material-symbols-rounded">
+       photo_camera</span> 가 글리프 대신 literal 문자열(94px 폭)로 렌더.
+       규칙을 알고 적어둔 사람조차 27줄 뒤에 어겼다 → 규율이 아니라 구조로 막는다.
+
+   두 겹으로 막는다:
+     1) 이 파일에 @import 를 쓰지 않는다 (src: url() 로 로컬 파일만 직접 참조)
+     2) `scripts/check-fonts.mjs` 가 @import 가 @font-face 뒤에 오면 게이트를 실패시킨다
+     3) `scripts/build.mjs` 가 CSS 를 평평하게 concat 한다 — 산출물에 @import 자체가 없다
+
+   ⚠️ 네트워크 URL 금지. 모든 src 는 로컬 woff2 여야 한다.
+
+   왜: CREFLE reports 의 업로드 PDF 렌더러는 `network_mode: "none"` 격리 컨테이너에서
+       `file://` 로 렌더한다(docker-compose.yml 실측). CDN 폰트는 거기서 100% 실패한다.
+       그리고 OS 폴백 스택(ui-monospace, Menlo, Consolas …)도 답이 아니다 — Ubuntu 엔
+       셋 다 없어 DejaVu 로 떨어진다. 실제로 발행된 OhMyFactory_PoC_기획서_v2.pdf 에는
+       **Menlo-Bold(macOS 전용)** 가 임베드돼 있다 = 그 PDF 는 재현 불가능하다.
+       명명하는 모든 서체를 번들하고, OS 별로 다르게 해석될 폴백을 두지 않는다.
+   ============================================================================ */
+
+/* ── Spoqa Han Sans Neo — 파운데이션 잠긴 미러 (본문·제목 전부) ────────────
+   font-display: block 을 쓴다 (swap 아님).
+   swap 은 FOUT 를 만들고, Playwright 가 그 폴백 프레임을 PDF 로 찍을 수 있다.
+   block 은 폰트를 기다린다 — 화면 UX 보다 인쇄 결정성이 우선인 문서에선 이게 맞다. */
+
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 100;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/SpoqaHanSansNeo-Thin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 300;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/SpoqaHanSansNeo-Light.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/SpoqaHanSansNeo-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/SpoqaHanSansNeo-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spoqa Han Sans Neo';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/SpoqaHanSansNeo-Bold.woff2') format('woff2');
+}
+
+/* ── JetBrains Mono — 도메인 번들 (코드·수치·eyebrow) ──────────────────────
+   파운데이션엔 mono 가 없다. 두 번째 도메인이 요구하면 그때 승격한다
+   (docs/domain-ds-guide.md §"신규 토큰의 자리"). 굵기는 문서에 실제로 쓰는 3종만:
+   400 본문 코드 / 500 라벨·eyebrow / 700 강조. */
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/JetBrainsMono-Bold.woff2') format('woff2');
+}
+
+/* ── Material Symbols Rounded — 파운데이션 잠긴 미러 ───────────────────────
+   전신에서 이 폰트가 실제로 깨져 있던 바로 그 지점이다. 이제 로컬 woff2 를
+   @font-face 로 직접 선언하므로 @import 순서 문제가 존재하지 않는다. */
+
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  src: url('./fonts/MaterialSymbolsRounded.woff2') format('woff2');
+}
+
+/* Material Symbols 는 리거처로 글리프를 찾는다 — 리거처가 꺼지면 아이콘 이름이
+   그대로 텍스트로 렌더된다(전신의 증상과 똑같이 보이지만 원인은 다르다).
+   `.ms` 는 짧은 별칭. */
+.material-symbols-rounded,
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: var(--icon-md);
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
