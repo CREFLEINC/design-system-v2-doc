@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CREFLE 덱 — 최소 예제</title>
+
+<!-- 자산 두 줄이 전부다. 이 둘 중 하나라도 빠지면 덱이 아니다.
+     · crefle-doc.css  — 토큰 + 폰트(로컬 woff2) + 슬라이드 스케일
+     · deck-stage.js   — 자동 스케일 · 키보드 nav · 스피커노트 · 썸네일 레일 ·
+                         그리고 @page 주입(= PDF 가 슬라이드당 1페이지가 되는 이유)
+     첨부된 참조 덱은 <deck-stage> 를 선언만 하고 JS 를 로드하지 않아
+     print CSS 가 0개였고 PDF 가 1페이지로 깨졌다. -->
+<link rel="stylesheet" href="../dist/crefle-doc/crefle-doc.css">
+</head>
+<body>
+
+<deck-stage>
+
+  <!-- 01 — 타이틀 (dark) -->
+  <section class="slide dark">
+    <div class="stage middle">
+      <p class="eyebrow">CREFLE · 예제</p>
+      <h1 class="display">문서 디자인 시스템</h1>
+      <p class="lede">토큰은 파운데이션에서 온다. 폰트는 번들된다. PDF 는 슬라이드당 1페이지다.</p>
+      <div class="capsule-row">
+        <span class="capsule">2026.07.17</span>
+        <span class="capsule">Spoqa Han Sans Neo</span>
+        <span class="capsule">1920 × 1080</span>
+      </div>
+    </div>
+    <div class="footer"><span>CREFLE</span><span>01</span></div>
+  </section>
+
+  <!-- 02 — 섹션 구분 (divider) -->
+  <section class="slide divider">
+    <div class="stage middle">
+      <p class="eyebrow">Chapter 01</p>
+      <h1>시맨틱 HTML 이<br>기본값으로 맞는다</h1>
+    </div>
+    <div class="ghost-num">01</div>
+    <div class="footer"><span>CREFLE</span><span>02</span></div>
+  </section>
+
+  <!-- 03 — 본문 (기본). 클래스 없이 h2/h3/p 만 써도 슬라이드 스케일이 적용된다. -->
+  <section class="slide">
+    <div class="stage">
+      <p class="eyebrow">3-1 · 원칙</p>
+      <h2>클래스를 요구하지 않는다</h2>
+      <p class="lede">LLM 이 문서를 쓴다. 클래스를 요구하면 누락 하나하나가 조용한 드리프트다.</p>
+      <div class="grid-2">
+        <div>
+          <h3>이렇게 쓰면</h3>
+          <p>그냥 <strong>h2·h3·p</strong> 를 쓴다. 크기·굵기·행간이 슬라이드 스케일로 맞는다.</p>
+        </div>
+        <div>
+          <h3>역할 클래스는</h3>
+          <p>HTML 에 대응 엘리먼트가 없는 것에만 — <strong>eyebrow · lede · capsule</strong>.</p>
+        </div>
+      </div>
+    </div>
+    <div class="footer"><span>CHAPTER 01</span><span>03</span></div>
+  </section>
+
+  <!-- 04 — 아이콘 회귀 검증.
+       전신 colors_and_type.css 는 @import 를 @font-face 뒤에 두어(36행) CSS 스펙을
+       어겼고, 파서가 그 규칙을 버려 Material Symbols 가 한 번도 로드된 적이 없다.
+       실측: 페이스 0개 등록, 아이콘이 literal 문자열(94px 폭)로 렌더.
+       아래 세 글리프가 텍스트가 아니라 아이콘으로 보이면 그 버그가 죽은 것이다.
+       e2e 테스트가 이 폭을 기계로 검증한다. -->
+  <section class="slide filled">
+    <div class="stage">
+      <p class="eyebrow">3-2 · 회귀</p>
+      <h2>아이콘이 실제로 뜬다</h2>
+      <p class="lede">아래가 "photo_camera" 라는 글자로 보이면 회귀다.</p>
+      <p>
+        <span class="material-symbols-rounded" id="probe-icon">photo_camera</span>
+        <span class="material-symbols-rounded">history</span>
+        <span class="material-symbols-rounded">settings</span>
+      </p>
+    </div>
+    <div class="footer"><span>CHAPTER 01</span><span>04</span></div>
+  </section>
+
+</deck-stage>
+
+<script src="../dist/crefle-doc/deck-stage.js"></script>
+</body>
+</html>

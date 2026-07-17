@@ -1,0 +1,254 @@
+/* ============================================================================
+   CREFLE 문서 DS — 덱(발표) 레이어
+
+   스코프: `.slide` 안에서만 슬라이드 스케일이 적용된다. 문서 레이어(.doc)와
+   같은 스타일시트에 있어도 충돌하지 않는다 — 문서엔 .slide 가 없기 때문이다.
+
+   사용:
+     <deck-stage>                        ← src/deck-stage.js 가 업그레이드한다
+       <section class="slide">…</section>
+       <section class="slide dark">…</section>
+     </deck-stage>
+     <script src="./deck-stage.js"></script>   ← 이 한 줄을 빠뜨리면 덱이 아니다
+
+   ⚠️ deck-stage.js 를 로드하지 않으면:
+      · 자동 스케일링 없음 (1920 캔버스가 뷰포트를 넘침)
+      · 스피커노트·썸네일 레일·키보드 nav 없음
+      · **@page 주입이 없어 PDF 가 1페이지로 깨진다** — 비활성 슬라이드가
+        opacity:0 이므로 render_pdf.py 가 활성 슬라이드 하나만 A4 로 찍는다
+      첨부된 참조 덱(49슬라이드)이 정확히 이 상태였다. <deck-stage> 를 선언만 하고
+      JS 를 로드하지 않아 자체 nav 를 재구현했고 print CSS 가 0개였다.
+      examples/deck-minimal.html 을 복사해 쓰면 이 실수가 불가능하다.
+   ============================================================================ */
+
+/* ── 슬라이드 캔버스 ────────────────────────────────────────────────────────
+   deck-stage 안에서는 ::slotted(*) 가 inset:0/100% 로 덮어쓴다. 아래 width/height
+   는 deck-stage 없이 슬라이드 하나를 단독으로 열어볼 때(저작 중)를 위한 것이다. */
+.slide {
+  width: var(--deck-design-w, var(--slide-canvas-w));
+  height: var(--deck-design-h, var(--slide-canvas-h));
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-16) var(--slide-gutter);
+
+  background: var(--surface);
+  color: var(--on-surface);
+  font: var(--w-regular) var(--slide-body) / var(--leading-body) var(--font-sans);
+
+  /* 인쇄 시 배경을 살린다 — 없으면 dark/divider 슬라이드가 흰 종이로 나온다. */
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+/* ── 슬라이드 변형 ──────────────────────────────────────────────────────────
+   dark/divider 는 파운데이션 --brand-gradient-dark(차콜→레드 램프)를 쓴다.
+   crefle_designer 스킬의 슬라이드 템플릿은 인디고 램프(#1A1C2E→#2E4090→#4758A9)를
+   썼는데, 그건 파운데이션이 --product-primary 로 강등한 제품 UI 색이다. */
+.slide.dark,
+.slide.divider {
+  background: var(--brand-gradient-dark);
+  color: var(--on-primary);
+}
+
+/* 격자 패턴 — viskit 배너 DNA. 장식이므로 의미 요소 위에 오지 않는다. */
+.slide.dark::before,
+.slide.divider::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--overlay-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--overlay-subtle) 1px, transparent 1px);
+  background-size: var(--slide-gutter) var(--slide-gutter);
+  pointer-events: none;
+}
+
+/* 채운 슬라이드 — 본문 대비를 낮춰 섹션 안의 리듬을 만든다. */
+.slide.filled {
+  background: var(--surface-container-low);
+}
+
+/* ── 스테이지: 슬라이드 안의 콘텐츠 영역 ───────────────────────────────────
+   footer 위로 뜨고(z-index), 격자 패턴 위에 놓인다. */
+.slide > .stage {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+.slide > .stage.top { justify-content: flex-start; }
+.slide > .stage.middle { justify-content: center; }
+
+/* ── 타이포 — 시맨틱 HTML 이 기본값으로 맞는다 ─────────────────────────────
+   Claude 는 <h1>제목</h1><p>본문</p> 을 자연스럽게 쓴다. 클래스를 요구하면
+   누락 하나하나가 조용한 드리프트다. 역할 클래스는 HTML 에 대응 엘리먼트가
+   없는 것(eyebrow/lede)에만 둔다. */
+.slide h1 {
+  font-size: var(--slide-h1);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--s-6) 0;
+}
+.slide h2 {
+  font-size: var(--slide-h2);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--s-6) 0;
+}
+.slide h3 {
+  font-size: var(--slide-h3);
+  font-weight: var(--w-medium);
+  line-height: var(--leading-snug);
+  margin: 0 0 var(--s-3) 0;
+}
+.slide p {
+  font-size: var(--slide-body);
+  line-height: var(--leading-body);
+  margin: 0 0 var(--s-5) 0;
+}
+.slide p:last-child { margin-bottom: 0; }
+.slide strong { font-weight: var(--w-bold); }
+.slide small { font-size: var(--slide-small); }
+
+/* 히어로 — 타이틀 슬라이드용. h1 보다 크다. */
+.slide .display {
+  font-size: var(--slide-display);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--s-8) 0;
+}
+
+/* eyebrow — HTML 에 대응 엘리먼트가 없다. */
+.slide .eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--slide-eyebrow);
+  font-weight: var(--w-medium);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 0 0 var(--s-4) 0;
+}
+/* 다크 위에서 --primary(#C9252C)는 대비가 부족하다 — 밝은 틴트를 쓴다. */
+.slide.dark .eyebrow,
+.slide.divider .eyebrow {
+  color: var(--primary-container);
+}
+
+/* lede — 제목 아래 요약 한 줄. */
+.slide .lede {
+  font-size: var(--slide-h3);
+  line-height: var(--leading-snug);
+  color: var(--on-surface-muted);
+  max-width: 55ch;
+  margin: 0 0 var(--s-6) 0;
+}
+.slide.dark .lede,
+.slide.divider .lede { color: var(--on-primary); opacity: 0.9; }
+
+/* ── 푸터 — 슬라이드 하단 고정. deck-stage 가 pageno 를 채우지 않으므로
+   저자가 쓰거나 비워둔다(장식). ───────────────────────────────────────── */
+.slide > .footer {
+  position: absolute;
+  left: var(--slide-gutter);
+  right: var(--slide-gutter);
+  bottom: var(--s-8);
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--slide-small);
+  font-weight: var(--w-medium);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+}
+.slide.dark > .footer,
+.slide.divider > .footer { color: var(--on-primary); opacity: 0.6; }
+
+/* ── 섹션 번호 워터마크 — 순수 장식. 의미 요소를 가리지 않는다. ─────────── */
+.slide .ghost-num {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  font-family: var(--font-mono);
+  font-size: var(--slide-ghost);
+  font-weight: var(--w-bold);
+  line-height: 0.8;
+  color: var(--overlay-ghost);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ── 캡슐 — 메타 정보 칩(날짜·발표자·참조). ────────────────────────────── */
+.slide .capsule-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-6);
+}
+.slide .capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-4);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+  font-family: var(--font-mono);
+  font-size: var(--slide-small);
+  font-weight: var(--w-medium);
+}
+.slide.dark .capsule,
+.slide.divider .capsule {
+  background: var(--overlay-soft);
+  border-color: var(--overlay-line);
+  color: var(--on-primary);
+}
+
+/* ── 레이아웃 그리드 — 4pt 그리드 위에서만. 눈대중 금지. ───────────────── */
+.slide .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-8); }
+.slide .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-6); }
+.slide .split { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--s-12); align-items: start; }
+
+/* ── 인쇄 ───────────────────────────────────────────────────────────────────
+   deck-stage.js 가 @media print 로 화면 레이아웃을 되돌리고(position:static,
+   transform 없음), <head> 에 @page{size: 1920px 1080px; margin:0} 을 주입한다
+   (@page 는 shadow DOM 안에서 무효라서). 그 결과 슬라이드당 1페이지가 된다.
+   여기서는 슬라이드 자체가 페이지 안에서 온전히 보이도록만 보장한다. */
+@media print {
+  .slide {
+    break-inside: avoid;
+    break-after: page;
+  }
+  .slide:last-child { break-after: auto; }
+  /* 애니메이션은 인쇄에서 무의미하고, 캡처 시점에 따라 중간 프레임이 찍힌다. */
+  .slide *,
+  .slide *::before,
+  .slide *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── 모션 감소 선호 ────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .slide *,
+  .slide *::before,
+  .slide *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

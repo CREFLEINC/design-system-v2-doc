@@ -42,6 +42,30 @@
      값은 colors_and_type.css 계보를 따른다. 승격 후보. */
   --outline: #767680;
 
+  /* --semantic-error-strong: 파운데이션엔 --semantic-error(#B3261E) 하나뿐이라
+     파괴적 액션의 hover 상태를 표현할 수 없다. M3 error-strong 값이고
+     colors_and_type.css 계보를 따른다(거기서도 같은 이름·값). 승격 후보.
+     쓰는 곳: deck-stage 의 삭제 확인 다이얼로그 danger 버튼 hover. */
+  --semantic-error-strong: #93000A;
+
+  /* ── 다크 표면 위의 오버레이 ──────────────────────────────────────────
+     dark/divider 슬라이드 위에 얹는 중립 알파. "얼마나 투명한가"는 디자인
+     결정이므로 토큰이어야 한다 — 컴포넌트에 rgba() 를 흩뿌리지 않는다.
+     파운데이션의 --state-* 는 primary 틴트(상호작용용)라 여기 쓸 수 없다.
+     중립인 이유: 다크 위 장식은 브랜드색을 쓰면 의미 요소와 경쟁한다.
+     web-ui 도 --scrim 으로 같은 구멍을 메웠다 → 승격 후보. */
+  --overlay-subtle: rgba(255, 255, 255, 0.05);  /* 격자 패턴          */
+  --overlay-ghost:  rgba(255, 255, 255, 0.08);  /* 섹션 번호 워터마크 */
+  --overlay-soft:   rgba(255, 255, 255, 0.08);  /* 캡슐 배경          */
+  --overlay-line:   rgba(255, 255, 255, 0.14);  /* 캡슐 보더          */
+
+  /* ── 슬라이드 설계 캔버스 ─────────────────────────────────────────────
+     deck-stage.js 의 DESIGN_W/H_DEFAULT(1920×1080)와 같은 값. deck-stage 는
+     런타임에 --deck-design-w/h 를 setProperty 로 주입하지만, 슬라이드를 단독으로
+     열어볼 때(저작 중)는 그게 없으므로 이 값이 폴백이 된다. */
+  --slide-canvas-w: 1920px;
+  --slide-canvas-h: 1080px;
+
   /* ==========================================================================
      2. TYPE — 서체
      폰트 패밀리는 styles/fonts.css 가 @font-face 로 선언한다.
@@ -89,6 +113,7 @@
   --slide-body:    24px;   /* 본문 — 투사 최소 가독    */
   --slide-small:   18px;   /* 캡션 · 각주              */
   --slide-eyebrow: 16px;   /* 대문자 eyebrow           */
+  --slide-ghost:  560px;   /* 섹션 번호 워터마크 — 장식이므로 스케일 밖의 별도 값 */
 
   /* ── 굵기 — Spoqa 는 100/300/400/500/700 만 제공한다 ─────────────────
      600·800 을 쓰면 브라우저가 합성(faux bold)해 인쇄에서 뭉갠다. */

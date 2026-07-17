@@ -24,7 +24,48 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+
+      # Playwright 브라우저는 npm ci 로 오지 않는다 — 별도 다운로드가 필요하다.
+      # --with-deps 는 Linux 시스템 라이브러리까지 깐다(ubuntu-latest 에 없는 것들).
+      # 캐시 키에 버전을 박아 핀이 바뀌면 캐시가 자동으로 갈린다.
+      - name: Playwright 버전 확인
+        id: pw
+        run: echo "version=$(node -p "require('./package.json').devDependencies['@playwright/test']")" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: pw-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - run: npx playwright install --with-deps chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps chromium
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+
+      # 버전 핀 검증 — @playwright/test 는 CREFLE reports 의 업로드 PDF 렌더러가 쓰는
+      # playwright==1.60.0 과 **정확히** 같아야 한다(Dockerfile.renderer).
+      # 어긋나면 배포하는 엔진과 다른 엔진을 테스트하게 된다 = 연극.
+      # package.json 에 ^ 없이 박아뒀지만, 그게 유지되는지 여기서 기계로 확인한다.
+      - name: 렌더러와 같은 Chromium 인지 확인
+        run: |
+          PINNED=$(node -p "require('./package.json').devDependencies['@playwright/test']")
+          if [ "$PINNED" != "1.60.0" ]; then
+            echo "::error::@playwright/test 가 '$PINNED' 로 핀돼 있습니다. reports 의 렌더러는"
+            echo "::error::playwright==1.60.0 을 씁니다(Dockerfile.renderer). 어긋나면 배포하는"
+            echo "::error::엔진과 다른 엔진을 테스트하게 됩니다. 렌더러를 올렸다면 여기도 함께 올리세요."
+            exit 1
+          fi
+          echo "✓ @playwright/test $PINNED — 렌더러의 playwright==1.60.0 과 일치"
+
       # 파운데이션 repo 에 접근하지 않는다. lock 파일과 디스크만 대조한다.
       # 덕분에 파운데이션이 private 이어도 CI 에 자격증명이 필요 없다.
       # (check:foundation:upstream 은 네트워크가 필요하므로 `check` 에 들어있지 않다.)
       - run: npm run check
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
