@@ -40,11 +40,42 @@ const CSS_ORDER = [
   'fonts.css', // @font-face → 로컬 woff2
   'doc.css', // 문서 스케일 + 시맨틱 HTML 기본값       (Phase 3)
   'deck.css', // 슬라이드 스케일 + 슬라이드 컴포넌트   (Phase 2)
+  'chart.css', // <crefle-chart> 의 슬롯→색 매핑        (Phase 3)
   'print.css' // @page · breaks · print-color-adjust  (Phase 4)
 ]
 
-// JS — 바이트 그대로 복사. 있으면 복사, 없으면 조용히 건너뛴다(페이즈별로 늘어난다).
-const JS_FILES = ['deck-stage.js', 'crefle-chart.js']
+// JS 산출물. 각 항목: 출력 파일명 → 이어붙일 소스 목록(순서 고정).
+//
+// 대부분은 **바이트 그대로 복사**다(parts 가 1개). 그게 기본이고, check:dist 재현성이
+// 자명해진다 — 변환이 없으니 도구 버전에 종속되지 않는다.
+//
+// crefle-chart.js 만 2개를 잇는다. 이유:
+//   · 수학(chart-math.mjs)은 **순수 ES 모듈**이어야 vitest 가 import 해 검증한다.
+//     30개 테스트가 축퇴 도메인·n=1 분모0·순환금지를 지킨다.
+//   · 하지만 산출물은 **IIFE** 여야 한다 — file:// 는 opaque origin 이라 Chromium 이
+//     모듈 스크립트를 CORS 로 차단한다.
+//   두 요구가 충돌하므로 빌드가 export 를 떼어 앞에 잇는다.
+//   concat 은 **문자열 결합**이라 컴파일러 버전에 종속되지 않는다 — 여전히 결정적이다.
+const JS_OUTPUTS = [
+  { out: 'deck-stage.js', parts: ['deck-stage.js'] },
+  { out: 'crefle-chart.js', parts: ['chart-math.mjs', 'crefle-chart.js'] }
+]
+
+/**
+ * ES 모듈을 IIFE 에 이어붙일 수 있게 export 키워드만 뗀다.
+ * `export const X` → `const X`, `export function X` → `function X`.
+ * 우리가 소유한 파일에만 쓴다 — 재수출(`export { a } from './b'`)이나 default 는 다루지 않고,
+ * 남아 있으면 아래에서 던진다.
+ * @param {string} src
+ * @returns {string}
+ */
+function stripExports(src) {
+  const out = src.replace(/^export\s+(?=(?:const|let|var|function|class|async)\b)/gm, '')
+  const leftover = out.match(/^\s*export\b.*$/m)
+  if (leftover) throw new Error(`export 를 떼지 못했습니다: ${leftover[0].trim()}\n  이 자리는 단순한 형태(export const/function/class)만 다룹니다.`)
+  if (/^\s*import\s/m.test(out)) throw new Error('import 가 남아 있습니다 — IIFE 로 이어붙일 수 없습니다.')
+  return out
+}
 
 const FONT_DIRS = [
   { from: join(STYLES, 'foundation', 'fonts'), why: '파운데이션 잠긴 미러' },
@@ -87,6 +118,35 @@ function buildCss({ fontUrl }) {
     parts.push(`/* ───── ${rel} ───── */\n${css.trim()}`)
   }
   return parts.join('\n\n') + '\n'
+}
+
+/**
+ * JS 산출물 하나를 만든다. parts 가 1개면 소스 그대로, 여러 개면 export 를 떼어 잇는다.
+ * @param {string[]} parts src/ 기준 파일명, 순서 고정
+ * @returns {string}
+ */
+function buildJs(parts) {
+  if (parts.length === 1) return readFileSync(join(SRC, parts[0]), 'utf8')
+
+  // 전체를 IIFE 로 한 번 더 감싼다. 안 감싸면 export 를 뗀 `const DEFAULT_WIDTH` 같은
+  // 것들이 **스크립트 전역 렉시컬 스코프**로 새어 나가, 같은 이름을 쓰는 다른 스크립트와
+  // 충돌하면 페이지 전체가 SyntaxError 로 죽는다. 문서 하나에 스크립트가 여럿 실릴 수 있다.
+  const body = parts
+    .map((p, i) => {
+      const src = readFileSync(join(SRC, p), 'utf8')
+      // 마지막 조각(컴포넌트)은 이미 IIFE 다 — 중첩돼도 무해하다. 앞 조각만 export 를 뗀다.
+      return `/* ───── ${p} ───── */\n${(i === parts.length - 1 ? src : stripExports(src)).trim()}\n`
+    })
+    .join('\n')
+
+  return (
+    `/* CREFLE 문서 DS — 생성물. 직접 수정하지 마세요.\n` +
+    `   ${parts.join(' + ')} 를 결정적으로 이어붙인 것입니다(scripts/build.mjs).\n` +
+    `   수학은 src/chart-math.mjs 에 순수 함수로 있고 vitest 가 검증합니다.\n` +
+    `   산출물이 IIFE 인 이유: file:// 는 opaque origin 이라 Chromium 이 모듈 스크립트를\n` +
+    `   CORS 로 차단합니다. 문서는 file:// 로 열립니다. */\n` +
+    `;(() => {\n${body}\n})();\n`
+  )
 }
 
 /**
@@ -138,14 +198,15 @@ function buildBundle() {
   for (const [name, abs] of licenses) copyFileSync(abs, join(OUT, 'fonts', name))
 
   const js = []
-  for (const f of JS_FILES) {
-    const abs = join(SRC, f)
-    if (!existsSync(abs)) continue
-    const body = readFileSync(abs)
-    if (/^\s*(import|export)\s/m.test(body.toString('utf8')))
-      throw new Error(`${f} 에 top-level import/export 가 있습니다. file:// 에서 모듈 스크립트는 CORS 로 차단됩니다 — IIFE 여야 합니다.`)
-    copyFileSync(abs, join(OUT, f))
-    js.push(f)
+  for (const { out, parts } of JS_OUTPUTS) {
+    const abs = parts.map((p) => join(SRC, p))
+    if (!abs.every(existsSync)) continue
+    const body = buildJs(parts)
+    // 최종 산출물에 top-level import/export 가 남으면 file:// 에서 통째로 차단된다.
+    if (/^\s*(import|export)\s/m.test(body))
+      throw new Error(`${out} 에 top-level import/export 가 남았습니다. file:// 에서 모듈 스크립트는 CORS 로 차단됩니다 — IIFE 여야 합니다.`)
+    writeFileSync(join(OUT, out), body)
+    js.push(parts.length > 1 ? `${out} (${parts.join(' + ')})` : out)
   }
 
   const sizes = [...fonts.keys()].length
@@ -212,12 +273,12 @@ function buildInline(inPath, outPath) {
   // 종료 태그로 보지 않는다.
   const escapeInlineJs = (/** @type {string} */ s) => s.replace(/<\/(script)/gi, '<\\/$1')
 
-  for (const f of JS_FILES) {
-    const abs = join(SRC, f)
-    if (!existsSync(abs)) continue
-    const tag = new RegExp(`<script[^>]+src\\s*=\\s*"[^"]*${f.replace(/\./g, '\\.')}"[^>]*>\\s*</script>`, 'i')
+  for (const { out, parts } of JS_OUTPUTS) {
+    if (!parts.every((p) => existsSync(join(SRC, p)))) continue
+    const tag = new RegExp(`<script[^>]+src\\s*=\\s*"[^"]*${out.replace(/\./g, '\\.')}"[^>]*>\\s*</script>`, 'i')
     if (!tag.test(html)) continue
-    const body = escapeInlineJs(readFileSync(abs, 'utf8'))
+    // 번들과 **같은 buildJs** 를 쓴다 — 두 경로가 다른 코드를 심으면 한쪽만 깨진 채 오래 간다.
+    const body = escapeInlineJs(buildJs(parts))
     // 함수 치환자 — 치환 문자열의 `$&`/`$'`/`` $` `` 특수 해석을 끈다.
     html = html.replace(tag, () => `<script>\n${body}\n</script>`)
   }

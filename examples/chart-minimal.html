@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CREFLE 차트 — 최소 예제</title>
+<link rel="stylesheet" href="../dist/crefle-doc/crefle-doc.css">
+<style>
+  /* 예제 페이지의 지면만 — 컴포넌트 스타일은 crefle-doc.css 가 전부 갖고 있다. */
+  body { margin: 0; background: var(--surface); color: var(--on-surface); font-family: var(--font-sans); }
+  main { max-width: 900px; margin: 0 auto; padding: var(--s-12) var(--s-6); }
+  h1 { font-size: var(--text-doc-title); margin: 0 0 var(--s-8); }
+  h2 { font-size: var(--text-section); margin: var(--s-12) 0 var(--s-2); }
+  p { font-size: var(--text-body); line-height: var(--leading-body); color: var(--on-surface-variant); }
+</style>
+</head>
+<body>
+<main>
+
+<h1>차트</h1>
+<p>
+  JSON 은 <strong>인라인</strong>이다. 문서는 <code>file://</code> 로 열리고, 그건 opaque origin 이라
+  <code>fetch()</code> 가 차단된다 — 스타일 선택이 아니라 유일하게 작동하는 방법이다.
+</p>
+
+<h2>막대 — 단일 시리즈</h2>
+<p>모든 막대가 slot-1(브랜드 레드)이다. 단일 시리즈이므로 범례가 없다 — 제목이 이름을 대신한다. 직접 라벨이 값을 나른다.</p>
+<crefle-chart type="bar" title="난이도별 품질 점수 개선" caption="출처: Hwang, M. (2026)" unit="점">
+  {"series":[{"name":"품질 점수 개선","data":[
+    {"label":"Basic","value":23.8},
+    {"label":"Advanced","value":29.6},
+    {"label":"Expert","value":36.2}]}]}
+</crefle-chart>
+
+<h2>막대 — 다중 시리즈</h2>
+<p>시리즈 2개 이상이면 범례가 <strong>항상</strong> 나온다. 정체성이 색만으로 전달되면 CVD·흑백 인쇄에서 사라진다. 막대 사이 2px 표면 간격으로 경계가 남는다.</p>
+<crefle-chart type="bar" title="하네스 적용 전후" unit="%">
+  {"series":[
+    {"name":"적용 전","data":[{"label":"정확도","value":49.5},{"label":"일관성","value":42},{"label":"재현성","value":38}]},
+    {"name":"적용 후","data":[{"label":"정확도","value":79.3},{"label":"일관성","value":78},{"label":"재현성","value":70}]}]}
+</crefle-chart>
+
+<h2>꺾은선</h2>
+<p>2px 선, 마커에 2px 표면 링 — 점이 포개져도 경계가 남는다.</p>
+<crefle-chart type="line" title="주차별 품질 점수" unit="점">
+  {"series":[
+    {"name":"하네스 적용","data":[{"label":"W1","value":52},{"label":"W2","value":61},{"label":"W3","value":70},{"label":"W4","value":79}]},
+    {"name":"기준선","data":[{"label":"W1","value":49},{"label":"W2","value":50},{"label":"W3","value":48},{"label":"W4","value":51}]}]}
+</crefle-chart>
+
+<h2>원형</h2>
+<p>
+  조각은 <strong>4개까지</strong>다. 원형은 모든 조각이 나란히 비교되므로 all-pairs 라는 더 어려운
+  CVD 검사를 받고, 그걸 통과한 건 앞 4슬롯뿐이다. 값과 비율은 범례에 직접 쓴다 — 조각 안에 넣으면
+  작은 조각에서 넘친다.
+</p>
+<crefle-chart type="pie" title="Claude Code 코드 구성" unit="%">
+  {"data":[
+    {"label":"하네스 (권한·컨텍스트·샌드박스·라우터·복구)","value":98.4},
+    {"label":"AI 의사결정 로직","value":1.6}]}
+</crefle-chart>
+
+<h2>원형 — 4조각</h2>
+<crefle-chart type="pie" title="작업 유형 분포" unit="건">
+  {"data":[
+    {"label":"기능 개발","value":42},
+    {"label":"버그 수정","value":28},
+    {"label":"리팩터링","value":18},
+    {"label":"문서","value":12}]}
+</crefle-chart>
+
+</main>
+<script src="../dist/crefle-doc/crefle-chart.js"></script>
+</body>
+</html>

@@ -21,7 +21,7 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.js", "scripts/**/*.mjs"],
+  "include": ["src/**/*.js", "src/**/*.mjs", "src/**/*.d.ts", "scripts/**/*.mjs"],
 
   "//exclude": [
     "아래 6개는 design-system-v2-webui 에서 **바이트 그대로** 이식한 파일이다.",

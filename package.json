@@ -20,8 +20,9 @@
     "check:fonts": "node scripts/check-fonts.mjs",
     "check:dist": "node scripts/check-dist.mjs",
     "sync-foundation": "node scripts/sync-foundation.mjs",
-    "check": "npm run check:foundation && npm run check:licenses && npm run check:fonts && npm run typecheck && npm test && npm run lint:tokens && npm run check:dist && npm run test:e2e",
-    "test:e2e": "playwright test"
+    "check": "npm run check:foundation && npm run check:licenses && npm run check:fonts && npm run check:palette && npm run typecheck && npm test && npm run lint:tokens && npm run check:dist && npm run test:e2e",
+    "test:e2e": "playwright test",
+    "check:palette": "node scripts/check-chart-palette.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0",
