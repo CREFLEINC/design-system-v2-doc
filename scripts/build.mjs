@@ -178,27 +178,77 @@ function buildInline(inPath, outPath) {
 
   // base64 로 폰트를 심는 것도 재배포다 → 라이선스 전문을 HTML 주석으로 동봉한다.
   // (LICENSE 파일이 따라올 수 없는 단일 파일이므로 이것이 유일한 준수 경로다.)
+  //
+  // ⚠️ HTML 주석 안에서 `--` 는 위험하다. 라이선스 전문에 `-->` 가 있으면 주석이 조기
+  //    종료되고 나머지가 문서 본문으로 렌더된다. `--` 를 유니코드 대시로 바꿔 막는다
+  //    (라이선스 전문의 **의미**는 보존된다 — 글자만 시각적으로 동등한 것으로 바뀐다).
+  const safeComment = (/** @type {string} */ s) => s.replace(/--/g, '––')
   const notice =
     '<!--\n  이 문서에는 아래 폰트가 base64 로 임베드되어 있습니다. 각 라이선스 전문을 함께 싣습니다.\n' +
     [...licenses.keys()].map((n) => `    · ${n.replace(/^LICENSE-|\.txt$/g, '')}`).join('\n') +
     '\n' +
-    [...licenses.values()].map((abs) => '\n' + '='.repeat(72) + '\n' + basename(abs) + '\n' + '='.repeat(72) + '\n' + readFileSync(abs, 'utf8')).join('') +
+    [...licenses.values()]
+      .map((abs) => '\n' + '='.repeat(72) + '\n' + basename(abs) + '\n' + '='.repeat(72) + '\n' + safeComment(readFileSync(abs, 'utf8')))
+      .join('') +
     '\n-->'
 
   let html = readFileSync(inPath, 'utf8')
-  const link = /<link[^>]+href\s*=\s*"[^"]*crefle-doc\.css"[^>]*>/i
-  const block = `${notice}\n<style>\n${css}</style>`
-  if (link.test(html)) html = html.replace(link, block)
-  else if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, `${block}\n</head>`)
-  else throw new Error('crefle-doc.css 링크도 </head> 도 없습니다 — 어디에 삽입할지 모르겠습니다.')
 
-  // JS 도 인라인한다 (file:// 에서 상대경로 <script src> 는 되지만, 단일 파일이 목적이므로).
+  // ⚠️ **순서가 중요하다: JS 를 CSS 보다 먼저 인라인한다.**
+  //
+  //    CSS 를 먼저 넣으면, 그 CSS 안의 **주석**에 있는 사용 예시 마크업이 문서 텍스트가
+  //    된다. deck.css 헤더 주석에는 `<script src="./deck-stage.js"></script>` 가 있다.
+  //    그 다음 <script src> 치환 정규식을 돌리면, 정규식이 **먼저 나오는** 그 주석 속
+  //    예시에 매치해서 73KB 의 JS 소스를 <style> 한복판에 쑤셔 넣는다. 진짜 <script src>
+  //    는 그대로 남고, deck-stage 는 영영 정의되지 않는다. 에러는 0개다.
+  //    실제로 그렇게 깨졌다 — </style> 직전 80자가 deck-stage.js 의 docblock 이었다.
+  //
+  //    JS 를 먼저 넣으면 <script src> 정규식이 원본 HTML 만 본다.
+  //
+  // 그리고 JS 소스 어디든 `</script>` 가 있으면 — 주석 안이든 — HTML 파서가 거기서
+  // 스크립트를 **종료**한다. deck-stage.js:87 docblock 의 `<script src="deck-stage.js">
+  // </script>` 때문에 인라인 <script> 가 92,000자가 아니라 4,598자에서 끊겼었다.
+  // `<\/script` 는 JS 파서에는 동일하고(주석/문자열 안에서 `\/` 는 `/`) HTML 파서는
+  // 종료 태그로 보지 않는다.
+  const escapeInlineJs = (/** @type {string} */ s) => s.replace(/<\/(script)/gi, '<\\/$1')
+
   for (const f of JS_FILES) {
     const abs = join(SRC, f)
     if (!existsSync(abs)) continue
-    const tag = new RegExp(`<script[^>]+src\\s*=\\s*"[^"]*${f.replace('.', '\\.')}"[^>]*>\\s*</script>`, 'i')
-    if (tag.test(html)) html = html.replace(tag, `<script>\n${readFileSync(abs, 'utf8')}\n</script>`)
+    const tag = new RegExp(`<script[^>]+src\\s*=\\s*"[^"]*${f.replace(/\./g, '\\.')}"[^>]*>\\s*</script>`, 'i')
+    if (!tag.test(html)) continue
+    const body = escapeInlineJs(readFileSync(abs, 'utf8'))
+    // 함수 치환자 — 치환 문자열의 `$&`/`$'`/`` $` `` 특수 해석을 끈다.
+    html = html.replace(tag, () => `<script>\n${body}\n</script>`)
   }
+
+  const link = /<link[^>]+href\s*=\s*"[^"]*crefle-doc\.css"[^>]*>/i
+  // ⚠️ <style> 안에 `</style` 가 있으면 파서가 조기 종료한다. CSS 주석의 예제 마크업이
+  //    그럴 수 있다. CSS 문자열/주석 안에서는 이스케이프가 안 되므로 분해해 넣는다.
+  const safeCss = css.replace(/<\/(style)/gi, '<\\/$1')
+  const block = `${notice}\n<style>\n${safeCss}</style>`
+
+  // ⚠️ String.replace 의 **치환 문자열**에서 `$&` `$'` `` $` `` `$1` 은 특수 패턴이다.
+  //    여기 치환물은 2MB 의 base64 폰트 + 90,000자의 JS 소스다 — 그 안에 우연히 그런
+  //    시퀀스가 있으면 조용히 잘리거나 중복된다. **함수 치환자**를 쓰면 해석이 아예
+  //    일어나지 않는다. 큰 텍스트를 replace 로 심을 때의 기본기다.
+  if (link.test(html)) html = html.replace(link, () => block)
+  else if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, () => `${block}\n</head>`)
+  else throw new Error('crefle-doc.css 링크도 </head> 도 없습니다 — 어디에 삽입할지 모르겠습니다.')
+
+  // 남은 외부 참조가 있으면 자기완결이 아니다 — 조용히 넘기지 않는다.
+  //
+  // ⚠️ <style>/<script> **안**은 보지 않는다. 인라인된 CSS·JS 의 주석에는 사용 예시
+  //    마크업이 정당하게 들어 있다 — deck.css 헤더의 `<script src="./deck-stage.js">`,
+  //    deck-stage.js:87 docblock 의 `<script src="deck-stage.js">`. 그걸 세면 오탐이다.
+  //    실제로 첫 버전이 그 둘을 "인라인 안 됨"이라고 잘못 보고했다.
+  const shell = html.replace(/<style\b[\s\S]*?<\/style>/gi, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+  const leftovers = [...shell.matchAll(/(?:src|href)\s*=\s*"(?!https?:|data:|#)([^"]+)"/gi)].map((m) => m[1])
+  if (leftovers.length)
+    throw new Error(
+      `자기완결이 아닙니다 — 인라인되지 않은 외부 참조가 남았습니다: ${leftovers.join(', ')}\n` +
+        `  단일 파일로 배포되면 이 참조들은 깨집니다(이메일·공유링크·업로드 렌더러).`
+    )
 
   writeFileSync(outPath, html)
   console.log(`✓ 자기완결 문서 생성: ${relative(ROOT, outPath)}  (${(html.length / 1024 / 1024).toFixed(2)}MB, 폰트 ${fonts.size}종 임베드 + 라이선스 ${licenses.size}종 동봉)`)
