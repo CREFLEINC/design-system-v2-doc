@@ -25,6 +25,12 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # pdftotext — PDF 출력 검증에 쓴다(페이지 번호·러닝 헤더·자동 번호가 **실제로
+      # 찍혔는지**). 없으면 tests/e2e/templates.spec.mjs 가 명시적으로 실패한다 —
+      # 조용히 건너뛰면 "로컬만 통과하는 테스트"가 된다.
+      - name: poppler-utils (pdftotext)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils
+
       # Playwright 브라우저는 npm ci 로 오지 않는다 — 별도 다운로드가 필요하다.
       # --with-deps 는 Linux 시스템 라이브러리까지 깐다(ubuntu-latest 에 없는 것들).
       # 캐시 키에 버전을 박아 핀이 바뀌면 캐시가 자동으로 갈린다.

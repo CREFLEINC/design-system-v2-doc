@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>회의록 — 2026-07-17</title>
+<link rel="stylesheet" href="./crefle-doc/crefle-doc.css">
+<style>
+  :root { --doc-running-title: '회의록 2026-07-17'; }
+</style>
+</head>
+
+<!-- 회의록은 짧아야 한다. 아무도 두 번 읽지 않는다.
+     · 표지 없음 — 한 장짜리 문서에 표지는 사치다
+     · doc-numbered 없음 — "1. 논의 / 1.1 안건" 은 회의록에 과하다
+     · 액션 아이템이 **본체**다. 나머지는 그 근거다.
+       그래서 액션이 맨 위에 온다 — 회의록을 여는 사람은 대개 "내가 뭘 해야 하지" 때문이다. -->
+<body class="doc">
+
+<header>
+  <p class="eyebrow">CREFLE · 회의록</p>
+  <h1>회의 제목</h1>
+
+  <table>
+    <tbody>
+      <tr><th>일시</th><td>2026-07-17 (목) 14:00–15:00</td></tr>
+      <tr><th>장소</th><td>회의실 / 온라인</td></tr>
+      <tr><th>작성자</th><td>이름</td></tr>
+    </tbody>
+  </table>
+</header>
+
+<!-- ══ 액션 아이템 — 맨 위 ═══════════════════════════════════════════════
+     담당·기한이 **없는 액션은 액션이 아니다**. 빈칸으로 두지 마세요.
+     상태는 semantic 색으로: 완료=success, 진행=info, 지연=warning, 막힘=error.
+     "개념 동등 = 색 동등" — 여기서도 같은 규칙입니다. -->
+<h2>액션 아이템</h2>
+
+<table>
+  <caption>결정된 할 일 — 담당과 기한이 없으면 액션이 아닙니다</caption>
+  <thead>
+    <tr><th>할 일</th><th>담당</th><th>기한</th><th>상태</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>구체적인 동사로. "검토" 말고 "A 안 대비 B 안 비용 산출"</td>
+      <td>이름</td>
+      <td class="num">2026-07-24</td>
+      <td><span class="label-pill">진행</span></td>
+    </tr>
+    <tr>
+      <td>할 일 2</td>
+      <td>이름</td>
+      <td class="num">2026-07-31</td>
+      <td><span class="label-pill">대기</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- ══ 결정 ══════════════════════════════════════════════════════════════
+     "논의했다" 는 결정이 아니다. 결정만 씁니다. -->
+<h2>결정</h2>
+
+<div class="callout callout-success">
+  <p><strong>결정 1.</strong> 무엇을 하기로 했는지. 근거 한 줄.</p>
+</div>
+
+<div class="callout callout-warning">
+  <p><strong>보류 1.</strong> 무엇이 아직 안 정해졌는지. <strong>무엇을 알아야</strong> 정할 수 있는지.</p>
+</div>
+
+<!-- ══ 논의 ══════════════════════════════════════════════════════════════
+     결정의 근거만. 발언 받아쓰기가 아닙니다. -->
+<h2>논의</h2>
+
+<h3>안건 1</h3>
+<ul>
+  <li>쟁점과 각 입장</li>
+  <li>결정에 이른 근거</li>
+</ul>
+
+<h3>안건 2</h3>
+<ul>
+  <li>내용</li>
+</ul>
+
+<!-- ══ 참석자 — 맨 아래 ══════════════════════════════════════════════════
+     읽는 사람에게 제일 안 중요합니다. 기록으로만 남깁니다. -->
+<h2>참석자</h2>
+
+<table>
+  <thead>
+    <tr><th>이름</th><th>소속</th><th>참석</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>이름 1</th><td>팀</td><td>참석</td></tr>
+    <tr><th>이름 2</th><td>팀</td><td>참석</td></tr>
+    <tr><th>이름 3</th><td>팀</td><td>불참 (공유만)</td></tr>
+  </tbody>
+</table>
+
+<p><small>다음 회의: 2026-07-24 (목) 14:00</small></p>
+
+</body>
+</html>

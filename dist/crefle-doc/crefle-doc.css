@@ -1422,3 +1422,205 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* ───── print.css ───── */
+/* ============================================================================
+   CREFLE 문서 DS — 인쇄 / PDF 레이어
+
+   ┌─ 이 파일의 근거는 전부 **실측**이다 (Chromium 148, 2026-07-17) ────────┐
+   │  계획 단계에서 나는 "Chromium 은 @page 마진 박스와 counter(page) 를     │
+   │  지원하지 않는다" 고 적었다. **틀렸다.** 오래된 제약을 그대로 들고 온    │
+   │  것이었고, 진짜 PDF 를 뽑아보니 전부 동작했다.                          │
+   │  → 추측하지 말고 실측한다. 아래 표가 그 결과다.                          │
+   └─────────────────────────────────────────────────────────────────────────┘
+
+   | 기능                                    | Chromium 148 | 근거            |
+   |----------------------------------------|--------------|-----------------|
+   | @page { size · margin }                 | ✅           | PDF MediaBox    |
+   |                                         |              | 595×842pt 확인  |
+   | 마진 박스 (top/bottom/left-middle/right) | ✅ 매 페이지 반복 |            |
+   | counter(page) · counter(pages)          | ✅ 증가함     | "2/3","3/3"     |
+   | @page :first (표지엔 번호 없음)          | ✅           | 1p 에서 비워짐   |
+   | 마진 박스 안에서 content 가 var() 를 읽음 | ✅          | 러닝 헤더의 해법 |
+   | break-before/after/inside · orphans/widows | ✅        |                 |
+   | thead 페이지 넘김 반복                    | ✅ 자동      |                 |
+   | **string-set + string()**                | ❌ **미지원** | TL:/TR: 이 출력에 없었다 |
+   | position: running() + element()          | ❌ **미지원** | 흐름에 1회만 나옴 |
+
+   ## 러닝 헤더 — string-set 이 없어서 var() 로 한다
+
+   표준(CSS GCPM)은 `h1 { string-set: doctitle content() }` + `content: string(doctitle)`
+   이지만 Chromium 이 지원하지 않는다. 대신 **`content: var(--doc-running-title)`** 이
+   동작한다. 저자는 :root 에 한 줄만 쓰면 된다:
+
+       :root { --doc-running-title: "삼진엘앤디 DX 진행계획서"; }
+
+   문자열이어야 하므로 **따옴표를 포함**해 넣는다. 비우면 헤더가 사라진다(기본값 "").
+   ============================================================================ */
+
+:root {
+  /* 저자가 덮어쓰는 러닝 헤더 문자열. 반드시 따옴표 포함.
+     비워두면 헤더에 아무것도 안 찍힌다 — 조용히 "undefined" 가 나오지 않는다. */
+  --doc-running-title: '';
+  --doc-running-org: 'CREFLE';
+}
+
+@media print {
+  /* ── 지면 ────────────────────────────────────────────────────────────────
+     A4. render_pdf.py 는 prefer_css_page_size=True 라 이 @page 를 그대로 쓴다
+     (덱은 deck-stage.js 가 1920×1080 을 주입하고, 문서는 여기가 A4 를 준다). */
+  @page {
+    size: A4;
+    margin: var(--doc-page-margin) 18mm;
+
+    /* 마진 박스는 매 페이지에 반복된다 — 실측 확인. */
+    @top-left {
+      content: var(--doc-running-org);
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      letter-spacing: var(--tracking-eyebrow);
+      color: var(--on-surface-muted);
+    }
+    @top-right {
+      /* string-set 이 없어서 var() 로 받는다. 저자가 :root 에 세팅. */
+      content: var(--doc-running-title);
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      color: var(--on-surface-muted);
+    }
+    @bottom-center {
+      content: counter(page) ' / ' counter(pages);
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      color: var(--on-surface-muted);
+    }
+  }
+
+  /* 표지엔 머리·번호를 넣지 않는다 — 관례. :first 가 동작한다(실측). */
+  @page :first {
+    @top-left { content: ''; }
+    @top-right { content: ''; }
+    @bottom-center { content: ''; }
+  }
+
+  /* ── 배경 인쇄 ───────────────────────────────────────────────────────────
+     차트 색·콜아웃 보더·카드 톤은 **데이터와 의미**다 — 배경 인쇄가 꺼지면
+     정보가 사라진다. Playwright 는 printBackground:true, 사람은 브라우저 설정. */
+  html,
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* **종이가 곧 표면이다.** --surface 를 칠하지 않는다.
+     실측(report.pdf 2페이지 픽셀): @page 여백은 순백 (255,255,255) 인데 문서 배경은
+     --surface (251,248,253) 라, 98% 흰색 사각형이 매 페이지에 찍히고 **경계선이 보였다**.
+     토너를 낭비하고 인쇄물답지 않다.
+     카드·콜아웃의 --surface-container-* 는 여전히 종이 대비로 뜬다 — 오히려 조금 더
+     또렷하다(#F5F2F7 이 #FBF8FD 위보다 흰 종이 위에서 대비가 크다).
+
+     ⚠️ 셀렉터가 `body` 가 아니라 `.doc` 인 이유: 템플릿은 <body class="doc"> 를 쓴다.
+        `.doc`(특이성 0-1-0)가 `body`(0-0-1)를 이기므로, print.css 가 뒤에 와도
+        `body { background: transparent }` 로는 **못 이긴다.** 실측으로 확인했다 —
+        computed 가 rgb(251,248,253) 그대로였다. 배경을 소유한 셀렉터를 재정의한다. */
+  .doc {
+    background: transparent;
+  }
+
+  /* 화면 전용 크롬은 인쇄하지 않는다. */
+  .screen-only {
+    display: none !important;
+  }
+
+  /* ── 페이지 나눔 ─────────────────────────────────────────────────────────
+     .page-break 를 쓰면 저자가 명시적으로 끊을 수 있다. 표지·장 시작에 쓴다. */
+  .page-break {
+    break-before: page;
+  }
+  .page-break-avoid {
+    break-inside: avoid;
+  }
+
+  /* 표지는 항상 한 장을 다 쓴다. */
+  .doc-cover {
+    break-after: page;
+  }
+
+  /* ── 모션 없음 ───────────────────────────────────────────────────────────
+     인쇄에 애니메이션은 무의미하고, 캡처 시점에 따라 중간 프레임이 찍힌다. */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   섹션 · 그림 · 표 번호 — CSS counters
+   화면에서도 인쇄에서도 같아야 하므로 @media print 밖에 둔다.
+   .doc-numbered 를 붙인 문서에서만 켜진다 — 회의록처럼 번호가 필요 없는 문서도 있다.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.doc-numbered {
+  counter-reset: chapter figure table;
+}
+
+.doc-numbered h2 {
+  counter-increment: chapter;
+  counter-reset: section;
+}
+.doc-numbered h2::before {
+  content: counter(chapter) '. ';
+  color: var(--on-surface-muted);
+}
+
+.doc-numbered h3 {
+  counter-increment: section;
+}
+.doc-numbered h3::before {
+  content: counter(chapter) '.' counter(section) ' ';
+  color: var(--on-surface-muted);
+}
+
+/* 그림·표 번호는 캡션에 붙는다. figure 안의 figcaption 만 — 차트의 caption 은
+   crefle-chart 가 따로 관리하므로 건드리지 않는다. */
+.doc-numbered figure > figcaption {
+  counter-increment: figure;
+}
+.doc-numbered figure > figcaption::before {
+  content: '그림 ' counter(figure) '. ';
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+.doc-numbered table > caption {
+  counter-increment: table;
+}
+.doc-numbered table > caption::before {
+  content: '표 ' counter(table) '. ';
+  font-weight: var(--w-medium);
+  color: var(--on-surface-variant);
+}
+
+/* ── 각주 ─────────────────────────────────────────────────────────────────
+   Chromium 은 CSS GCPM 의 float:footnote 를 지원하지 않는다(실측 대상이 아니라
+   알려진 사실이지만, 지원했다면 여기가 그 자리다). 문서 끝 미주로 처리한다. */
+.doc .footnotes {
+  margin-top: var(--s-10);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--outline-variant);
+  font-size: var(--text-small);
+  color: var(--on-surface-variant);
+  break-inside: avoid;
+}
+.doc .footnotes ol {
+  padding-left: var(--s-5);
+}
+.doc a.fn-ref {
+  font-size: 0.75em;
+  vertical-align: super;
+  text-decoration: none;
+  color: var(--primary);
+  padding: 0 0.15em;
+}
