@@ -1,0 +1,176 @@
+/* ============================================================================
+   CREFLE 문서 DS — 차트 레이어
+
+   <crefle-chart> 가 만든 SVG 를 칠한다. 색은 전부 doc-tokens.css 의 검증된
+   categorical 팔레트(--chart-1..8)에서 온다 — 여기서 색을 발명하지 않는다.
+
+   ## 슬롯 매핑
+   컴포넌트가 data-slot="1".."8" 을 붙이고, 여기서 그걸 색으로 바꾼다.
+   JS 가 색을 직접 넣지 않는 이유: 색은 디자인 결정이고 CSS 가 그 자리다.
+   (그리고 lint:tokens 규칙F 가 JS 의 유채색을 막는다.)
+
+   ## 색만으로 구분하지 않는다
+   팔레트 검증이 남긴 의무 — 대비 relief(slot 3·6·7 이 3:1 미만), CVD floor
+   band(slot 6↔7 ΔE 6.1), 흑백 인쇄(레드↔블루 명도차 0.049). 전부 같은 답:
+   범례 + 직접 라벨 + 마크 간 간격 + 표 대체. 아래 스타일이 그것을 지원한다.
+   ============================================================================ */
+
+.crefle-chart {
+  margin: var(--s-6) 0;
+  /* 차트도 인쇄된다 — 페이지 중간에서 잘리면 못 읽는다. */
+  break-inside: avoid;
+}
+
+.crefle-chart-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* viewBox 논리 크기 안에서 반응형. 폭에 맞춰 늘어난다. */
+}
+
+.crefle-chart-title {
+  font-size: var(--text-sub);
+  font-weight: var(--w-medium);
+  color: var(--on-surface);
+  margin-bottom: var(--s-3);
+}
+
+.crefle-chart-caption {
+  font-size: var(--text-small);
+  color: var(--on-surface-muted);
+  margin-top: var(--s-2);
+}
+
+/* ── 슬롯 → 색 ─────────────────────────────────────────────────────────────
+   --series-color 는 시리즈별 오버라이드용(컴포넌트가 인라인 style 로 세팅).
+   없으면 슬롯 색으로 떨어진다. */
+[data-slot='1'] { --series-color: var(--chart-1); }
+[data-slot='2'] { --series-color: var(--chart-2); }
+[data-slot='3'] { --series-color: var(--chart-3); }
+[data-slot='4'] { --series-color: var(--chart-4); }
+[data-slot='5'] { --series-color: var(--chart-5); }
+[data-slot='6'] { --series-color: var(--chart-6); }
+[data-slot='7'] { --series-color: var(--chart-7); }
+[data-slot='8'] { --series-color: var(--chart-8); }
+
+/* ── 마크 ───────────────────────────────────────────────────────────────── */
+.crefle-chart-bar {
+  fill: var(--series-color);
+}
+
+.crefle-chart-slice {
+  fill: var(--series-color);
+  /* 조각 사이 간격 — 표면색 stroke 로 만든다. path 를 줄이면 각도가 왜곡되어
+     면적이 값과 어긋난다(차트가 거짓말을 한다). */
+  stroke: var(--chart-gap);
+}
+
+.crefle-chart-line {
+  fill: none;
+  stroke: var(--series-color);
+  stroke-width: 2; /* dataviz §marks: 2px lines */
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.crefle-chart-point {
+  fill: var(--series-color);
+  /* 겹치는 마크에 2px 표면 링 — 두 점이 포개져도 경계가 남는다. */
+  stroke: var(--chart-gap);
+  stroke-width: 2;
+}
+
+/* ── 격자·축 — 눈에 띄지 않아야 한다 (dataviz §recessive grid/axes) ─────── */
+.crefle-chart-grid {
+  stroke: var(--chart-grid);
+  stroke-width: 1;
+}
+
+.crefle-chart-axis {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+}
+
+/* ── 텍스트는 **텍스트 토큰**을 입는다. 시리즈 색이 아니라 ────────────────
+   dataviz non-negotiable: "Text wears text tokens, never the series color —
+   values, labels, and legends stay in primary/secondary/muted ink; a colored
+   mark beside them carries identity." */
+.crefle-chart-tick,
+.crefle-chart-axis-label {
+  fill: var(--on-surface-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+}
+.crefle-chart-tick { text-anchor: end; }
+.crefle-chart-axis-label { text-anchor: middle; }
+
+/* 직접 라벨 — 대비 relief 와 흑백 인쇄 의무를 갚는 핵심. 값이 색과 무관하게 읽힌다. */
+.crefle-chart-value {
+  fill: var(--on-surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--w-medium);
+  text-anchor: middle;
+}
+
+/* ── 범례 — 시리즈 2개 이상이면 항상 ────────────────────────────────────── */
+.crefle-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  list-style: none;
+  margin: var(--s-3) 0 0 0;
+  padding: 0;
+  font-size: var(--text-small);
+  color: var(--on-surface-variant);
+}
+.crefle-chart-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.crefle-chart-swatch {
+  flex: 0 0 auto;
+  width: var(--s-3);
+  height: var(--s-3);
+  border-radius: var(--radius-xs);
+  background: var(--series-color);
+}
+
+/* ── 시각적 숨김 — **클립이지 display:none 이 아니다** ──────────────────────
+   display:none 은 접근성 트리에서 통째로 사라진다. 클립하면 스크린리더는 읽는다.
+   이 표가 대비 relief 의무의 "table view" 다. */
+.crefle-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── 오류 — 조용히 죽지 않는다 ─────────────────────────────────────────── */
+.crefle-chart-error {
+  padding: var(--s-4);
+  border: 1px solid var(--semantic-error);
+  border-radius: var(--radius-sm);
+  background: var(--surface-container-low);
+  color: var(--semantic-error);
+  font-size: var(--text-small);
+  font-family: var(--font-mono);
+}
+
+/* ── 인쇄 ───────────────────────────────────────────────────────────────── */
+@media print {
+  .crefle-chart {
+    break-inside: avoid;
+  }
+  /* 차트 색은 데이터 인코딩이다 — 배경 인쇄가 꺼지면 정보가 사라진다. */
+  .crefle-chart-svg {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
