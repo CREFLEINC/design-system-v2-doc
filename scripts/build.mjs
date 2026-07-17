@@ -23,6 +23,7 @@
 //   node scripts/build.mjs              dist/crefle-doc/ 생성 (벤더링 번들)
 //   node scripts/build.mjs --inline <in.html> [out.html]
 //                                       폰트까지 base64 인라인한 자기완결 문서 생성
+import { createHash } from 'node:crypto'
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync, copyFileSync } from 'node:fs'
 import { join, dirname, basename, resolve, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -150,6 +151,75 @@ function buildJs(parts) {
 }
 
 /**
+ * 벤더링된 번들의 **출처**를 적는다. 강제(enforcement)가 아니라 출처(provenance) 다.
+ *
+ * ## 무엇을 답하나
+ *
+ * 발행된 문서 옆의 crefle-doc/ 를 보고 **네트워크 없이** 이걸 답할 수 있게 한다:
+ *   "이 문서의 브랜드 레드는 어느 파운데이션 커밋에서 왔나?"
+ *     → jq -r .foundation.commit crefle-doc/crefle-doc.lock.json
+ * foundation 블록을 styles/foundation/foundation.lock.json 에서 **그대로 복사**하기
+ * 때문에, 잎(문서)에 서서 2-hop 위까지 추적된다. 그게 이 파일의 핵심이다.
+ *
+ * ## 왜 강제하지 않나
+ *
+ * 파운데이션→doc DS 는 소비 **repo** 가 있어서 CI 가 tamper 를 막는다(check:foundation).
+ * 하지만 doc DS→문서는 소비 repo 가 없다 — 문서는 그냥 파일이고, CREFLEINC/reports 는
+ * 그걸 **호스팅**할 뿐 DS 를 모른다(register-report: "리포트 본문 작성 자체는 외부에서
+ * 수행하며 이 스킬은 '등록'만 담당한다"). 강제할 자리가 없으므로 강제하지 않는다.
+ * 대신 추적 가능하게 만든다.
+ *
+ * ## ⚠️ git HEAD 를 넣지 않는 이유 — 넣으면 빌드가 비결정적이 된다
+ *
+ *   빌드 → lock 에 commit X → 커밋하면 HEAD 가 Y → 재빌드하면 lock 이 Y →
+ *   check:dist 가 "달라졌다" 며 실패. 영원히 green 이 안 되는 닭-달걀이다.
+ *
+ * 그래서 **package.json 의 version** 을 쓴다. 릴리즈 때 손으로 올리는 값이라
+ * 빌드 입장에선 상수다. 태그를 version 과 같게 달면 version→commit 은 git 이 답한다.
+ * 같은 이유로 syncedAt 같은 타임스탬프도 넣지 않는다.
+ *
+ * @param {Map<string, string>} fonts
+ * @param {string} css
+ * @param {{out: string, body: string}[]} js
+ * @returns {string} JSON 문자열
+ */
+function buildLock(fonts, css, js) {
+  const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'))
+  const foundationLock = JSON.parse(readFileSync(join(STYLES, 'foundation', 'foundation.lock.json'), 'utf8'))
+
+  /** @type {Record<string, string>} */
+  const files = {}
+  const put = (/** @type {string} */ name, /** @type {Buffer | string} */ data) => {
+    files[name] = 'sha256:' + createHash('sha256').update(data).digest('hex')
+  }
+
+  put('crefle-doc.css', css)
+  for (const { out, body } of js) put(out, body)
+  // 폰트와 **라이선스 전문**을 둘 다 넣는다 — 라이선스가 빠진 사본은 무단 재배포다.
+  for (const [name, abs] of [...fonts].sort()) put(`fonts/${name}`, readFileSync(abs))
+  for (const [name, abs] of [...collectLicenses()].sort()) put(`fonts/${name}`, readFileSync(abs))
+
+  return (
+    JSON.stringify(
+      {
+        repo: 'https://github.com/CREFLEINC/design-system-v2-doc.git',
+        version: pkg.version,
+        // 파운데이션 블록을 그대로 복사 — 잎에서 2-hop 추적을 가능하게 하는 유일한 수단.
+        foundation: {
+          repo: foundationLock.repo,
+          ref: foundationLock.ref,
+          commit: foundationLock.commit,
+          syncedAt: foundationLock.syncedAt
+        },
+        files: Object.fromEntries(Object.entries(files).sort())
+      },
+      null,
+      2
+    ) + '\n'
+  )
+}
+
+/**
  * 번들 대상 woff2 를 모은다 (파운데이션 미러 + 도메인 번들).
  * @returns {Map<string, string>} 파일명 → 절대경로
  */
@@ -198,6 +268,8 @@ function buildBundle() {
   for (const [name, abs] of licenses) copyFileSync(abs, join(OUT, 'fonts', name))
 
   const js = []
+  /** @type {{out: string, body: string}[]} */
+  const jsBodies = []
   for (const { out, parts } of JS_OUTPUTS) {
     const abs = parts.map((p) => join(SRC, p))
     if (!abs.every(existsSync)) continue
@@ -206,14 +278,20 @@ function buildBundle() {
     if (/^\s*(import|export)\s/m.test(body))
       throw new Error(`${out} 에 top-level import/export 가 남았습니다. file:// 에서 모듈 스크립트는 CORS 로 차단됩니다 — IIFE 여야 합니다.`)
     writeFileSync(join(OUT, out), body)
+    jsBodies.push({ out, body })
     js.push(parts.length > 1 ? `${out} (${parts.join(' + ')})` : out)
   }
+
+  // 출처 표기. 파일을 다 쓴 **뒤에** 해시한다.
+  const lock = buildLock(fonts, css, jsBodies)
+  writeFileSync(join(OUT, 'crefle-doc.lock.json'), lock)
 
   const sizes = [...fonts.keys()].length
   console.log(`✓ dist/crefle-doc/ 생성`)
   console.log(`    crefle-doc.css   ${(css.length / 1024).toFixed(1)}KB  (${CSS_ORDER.filter((r) => existsSync(join(STYLES, r))).length}개 레이어 평평하게 연결)`)
   console.log(`    fonts/           woff2 ${sizes}종 + 라이선스 ${licenses.size}종`)
-  console.log(`    js               ${js.length ? js.join(', ') : '(아직 없음 — Phase 2·3)'}`)
+  console.log(`    js               ${js.length ? js.join(', ') : '(없음)'}`)
+  console.log(`    crefle-doc.lock.json  v${JSON.parse(lock).version} · foundation ${JSON.parse(lock).foundation.commit.slice(0, 7)}`)
 }
 
 // ── 모드 2: 자기완결 인라인 ─────────────────────────────────────────────────

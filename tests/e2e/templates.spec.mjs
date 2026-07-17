@@ -61,6 +61,10 @@ const TEMPLATES = [
   { name: 'minutes', charts: 0, minPages: 1 }
 ]
 
+// 덱은 문서와 지면이 다르다 — deck-stage.js 가 @page{1920×1080} 을 주입한다.
+// 그래서 A4 를 기대하는 위 루프에 넣지 않고 따로 검사한다.
+const DECK = { name: 'deck', slides: 4 }
+
 for (const t of TEMPLATES) {
   test(`${t.name} — 무네트워크 file:// 에서 온전히 렌더된다`, async ({ isolatedPage: page }) => {
     await page.goto(pathToFileURL(join(dir, `${t.name}.html`)).href)
@@ -161,4 +165,50 @@ test('자동 번호 — 장·절·표가 실제 출력에 찍힌다', async ({ i
   expect(txt, '장 번호가 증가하지 않는다').toMatch(/2\.\s*배경/)
   expect(txt, '절 번호가 없다 — counter(section) 이 안 먹었다').toMatch(/2\.1\s*현황/)
   expect(txt, '표 번호가 없다').toMatch(/표 \d/)
+})
+
+test('deck 템플릿 — 슬라이드당 1페이지, 1440×810pt', async ({ isolatedPage: page }) => {
+  await page.goto(pathToFileURL(join(dir, `${DECK.name}.html`)).href)
+  await page.waitForFunction(() => document.fonts && document.fonts.status === 'loaded', null, { timeout: 10000 })
+  await page.waitForTimeout(400)
+
+  const d = await page.evaluate(() => {
+    const el = /** @type {any} */ (document.querySelector('deck-stage'))
+    return {
+      upgraded: !!el?.shadowRoot,
+      slides: el?.length,
+      charts: document.querySelectorAll('crefle-chart figure').length,
+      chartErrors: document.querySelectorAll('.crefle-chart-error').length
+    }
+  })
+
+  // 템플릿에서 <script src> 를 지우면 여기서 잡힌다 — 참조 덱이 그랬다.
+  expect(d.upgraded, 'deck-stage 가 업그레이드되지 않았다 — <script src> 가 빠졌나?').toBe(true)
+  expect(d.slides).toBe(DECK.slides)
+  expect(d.charts, '덱 템플릿의 차트가 렌더되지 않았다').toBe(1)
+  expect(d.chartErrors).toBe(0)
+  expect(page.blocked).toEqual([])
+
+  const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true })
+  const raw = pdf.toString('latin1')
+  const pages = (raw.match(/\/Type\s*\/Page[^s]/g) || []).length
+  const nums = (raw.match(/\/MediaBox\s*\[[^\]]*\]/) || [''])[0].match(/[\d.]+/g) || []
+
+  expect(pages, '슬라이드당 1페이지가 아니다').toBe(DECK.slides)
+  // 문서는 A4(595×842), 덱은 1920×1080px = 1440×810pt. 둘이 한 스타일시트에 공존한다.
+  expect(Math.round(Number(nums[2])), 'US Letter(612)로 떨어졌다면 @page 주입이 안 된 것').toBe(1440)
+  expect(Math.round(Number(nums[3]))).toBe(810)
+})
+
+test('덱 차트가 light 슬라이드에 있다 — 팔레트는 다크에서 검증되지 않았다', async ({ isolatedPage: page }) => {
+  /** @type {string[]} */
+  const warns = []
+  page.on('console', (m) => m.type() === 'warning' && warns.push(m.text()))
+  await page.goto(pathToFileURL(join(dir, 'deck.html')).href)
+  await page.waitForTimeout(600)
+
+  expect(
+    warns.filter((w) => w.includes('다크 슬라이드')),
+    '템플릿이 다크 슬라이드 위에 차트를 올렸다 — 팔레트가 다크에서 검증되지 않았다'
+  ).toEqual([])
 })
