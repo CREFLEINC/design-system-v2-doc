@@ -1,6 +1,6 @@
 # CREFLE 문서 디자인 시스템 — 설계
 
-*2026-07-17 · 상태: Phase 1 구현 중*
+*2026-07-17 · 상태: **전 페이즈 완료** (phase1~5, v0.1.0). 열린 질문은 문서 끝 참조.*
 
 ## 왜 만드는가
 
@@ -177,21 +177,91 @@ import/export **0개**다 — 그 형태를 유지한다. `build.mjs` 가 top-le
 - 라이선스 전문 삭제/스텁화 → `check:licenses` 거부 ✅
 - 산출물 실측: 실제 `@import` **0개**, `@font-face` 9개, 네트워크 자산 **0**, 빌드 **바이트 결정적** ✅
 
-## 열린 질문
+## 열린 질문 — 해결 상태 (2026-07-17, 전 페이즈 완료 시점)
 
-1. **차트 범주형 팔레트** — `--chart-1..5` 는 primary 레드 + 차콜 사다리로 거의 단색. 인쇄된 5조각
-   원형 차트에 충분한가? `dataviz` 스킬의 대비 공식으로 검증 (Phase 3)
-2. **기존 발행 문서 마이그레이션** — Pretendard 구문서를 Spoqa 로 재작업할 것인가, 신규만 적용하고
-   자연 교체를 기다릴 것인가. 신규만 하면 서버 목차에 **두 서체가 섞여 보인다** (Phase 5)
-3. **문서 페이지 번호** — Chromium 은 `@page` 마진 박스(`@top-center`)·`counter(page)` 를 지원하지
-   않아 CSS 만으론 불가. reports 를 안 건드리므로 문서가 자체 해결해야 한다.
-   후보: (a) 고정 A4 페이지 div(덱 패턴과 일관, 자동 흐름 상실) (b) `position:fixed` 인쇄 반복 동작 실측
-   (c) 페이지 번호 포기. **Phase 4 에서 실측 후 결정**
-4. **`--on-surface-muted` 승격** — 파운데이션을 고치고 이 오버라이드를 지울 것인가
-5. **JetBrains Mono 승격** — 두 번째 도메인이 mono 를 요구하면 파운데이션으로 (가이드 권장)
+### ① 차트 범주형 팔레트 — **해결**
+
+`--chart-1..5`(primary 레드 + 차콜 사다리)를 dataviz `validate_palette.js` 로 검증했더니
+**3개 FAIL**. 그중 하나는 `#8A8D94`↔`#63666D` ΔE 13.3 < 15 — **"정상 시력으로도 구분 불가"**
+인 hard FAIL 이었다. 근본 원인: **단색 사다리는 sequential(크기) 구조인데 categorical(정체성)
+에 썼다.** 제품 UI 는 시리즈가 1~2개라 안 드러났지만 문서의 5조각 원형 차트에선 무너진다.
+
+→ 8슬롯으로 교체. 브랜드 레드가 slot-1(단일 시리즈 차트가 전부 이 색을 쓰므로 CREFLE
+차트의 기본 인상이 된다). 2~8 은 dataviz 레퍼런스의 검증된 색. green 을 5번으로 미룸 —
+green↔브랜드레드 ΔE 2.7(deutan)로 원형(all-pairs)에서 충돌하는 적록 문제.
+검증: 막대·꺾은선(adjacent, 8슬롯) ALL PASS / 원형(all-pairs, 앞 4슬롯) ALL PASS.
+
+**스킬 밖의 발견**: 보고서는 흑백으로 인쇄된다. 레드↔블루 상대명도차 **0.049** — 흑백에선
+거의 같은 회색. dataviz 에 없는 검사라 `check-chart-palette.mjs` 가 직접 계산한다.
+세 의무(CVD floor band · 대비 relief · 흑백)가 같은 답을 가리킨다: 범례 + 직접 라벨 +
+마크 간 2px 간격 + 표 대체. 컴포넌트가 전부 제공한다.
+
+**다크는 범위에서 잘랐다** — 다크에서 8색 중 4개가 lightness band 를 벗어난다. dataviz 는
+다크가 자동 반전이 아니라 별도 스텝이어야 한다고 명시한다. 문서는 light 전용이고
+`.slide.dark` 는 타이틀·섹션용이라 차트 자리가 아니다(참조 덱 49슬라이드에 차트 0개).
+차트를 다크 슬라이드에 올리면 컴포넌트가 경고한다.
+
+### ② 기존 발행 문서 마이그레이션 — **미해결 (의도적으로 남김)**
+
+발행된 Pretendard 구문서(데모 v8/v9, PoC 기획서 v1/v2)를 Spoqa 로 재작업할 것인가.
+**신규만 Spoqa 로 가면 서버 목차에 두 서체가 섞여 보인다.** 이 repo 의 범위 밖이고
+(reports 는 DS 소비자가 아니다), 재작업 여부는 비용 대비 가치 판단이라 사람이 정해야 한다.
+
+### ③ 문서 페이지 번호 — **해결. 그리고 계획이 틀렸다**
+
+계획서에 `@page` 마진 박스·`counter(page)` 가 **"미지원"** 이라고 적고, "reports 의
+render_pdf.py 를 고쳐야 하는데 범위 밖" 이라는 딜레마를 남겼다. **오래된 제약을 그대로
+들고 온 것이었다.** 실측(Chromium 148):
+
+| 기능 | 결과 |
+|---|---|
+| 마진 박스 (top/bottom/left/right) | ✅ 매 페이지 반복 |
+| `counter(page)` · `counter(pages)` | ✅ 증가함 |
+| `@page :first` (표지엔 번호 없음) | ✅ |
+| 마진 박스 안에서 `content` 가 `var()` 읽기 | ✅ ← 러닝 헤더의 해법 |
+| `string-set` + `string()` | ❌ 미지원 |
+| `position: running()` + `element()` | ❌ 미지원 |
+
+표준(`string-set`)만 없어서 `content: var(--doc-running-title)` 로 받는다. 저자는 `:root` 에
+한 줄만 쓴다. **reports 는 손대지 않는다** — 딜레마 자체가 없었다.
+
+### ④ `--on-surface-muted` AA 미달 — **doc DS 에서 덮음. 업스트림 미보고**
+
+파운데이션 값 `#77767F` 는 네 표면 전부에서 미달(4.26/4.04/3.86/3.65:1). `doc-tokens.css`
+가 `#65646D`(최악 4.75:1)로 덮는다 — AA 를 통과하는 **최소 변경**이다.
+파운데이션 이슈는 아직 열지 않았다. → 후속.
+
+### ⑤ JetBrains Mono 파운데이션 승격 — **보류 (가이드 권장대로)**
+
+doc DS 에 번들했다. 가이드는 "여러 도메인에서 같은 토큰이 반복되면 그때 승격" 을 권한다.
+web-ui 는 아직 시스템 mono 스택을 쓰므로 도메인 하나뿐이다. 두 번째 도메인이 요구하면 승격.
+
+---
+
+## 파운데이션 업스트림 보고 대상 (후속)
+
+이 프로젝트에서 발견한 것 중 파운데이션이 고쳐야 할 것:
+
+1. **`--on-surface-muted` 가 네 표면 전부에서 WCAG AA 미달** — 가이드는 `--surface` 기준
+   4.26:1 만 기록했지만 실제로는 4개 전부다(최악 3.65:1). `#65646D` 가 최소 변경.
+2. **`--outline` 부재** — `--outline-variant` 만 있다. web-ui 도 같은 구멍을 보고했다.
+3. **`--on-primary-container` 부재** — 단, 새 hex 가 필요 없다. `--brand-red-deep`(#7D161B)
+   이 `--primary-container` 위에서 8.11:1 로 AA 를 통과한다. 별칭만 추가하면 된다.
+4. **`--semantic-error-strong` 부재** — 파괴적 액션의 hover 를 표현할 수 없다.
+5. **`ds-bundle/fonts/` 에 라이선스 전문 0개** — private repo 라 위험은 낮지만,
+   claude.ai/design 으로 sync 되므로 배포에 해당할 수 있다.
+
+## 별개 조치 (이 repo 밖)
+
+⚠️ **`CREFLEINC/reports`(PUBLIC)가 Spoqa(OFL 1.1) + Material Symbols(Apache-2.0)를 라이선스
+전문 없이 재배포 중** — `proposals/ohmyfactory/fonts/` 에 라이선스 0개. 62MB OTF.
+이 DS 의 번들은 라이선스 전문을 포함하므로, 그 폴더를 `dist/crefle-doc/` 로 교체하면
+위반이 해소되고 용량도 50배 줄어든다(62MB → 1.2MB). 다만 reports 는 DS 소비자가 아니므로
+이 repo 가 강제하지 않는다 — 사람이 판단할 일이다.
 
 ## 참고
 
 - 부트스트랩 체크리스트: 파운데이션 `docs/domain-ds-guide.md`
 - 참조 구현: `CREFLEINC/design-system-v2-webui`
 - 폴리레포 무결성 스펙: webui `docs/superpowers/specs/2026-07-09-polyrepo-integrity-design.md`
+- 알려진 한계: `docs/known-issues.md`
