@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>연구노트 — 주제</title>
+<link rel="stylesheet" href="./crefle-doc/crefle-doc.css">
+<style>
+  :root { --doc-running-title: '연구노트 — 주제'; }
+</style>
+</head>
+
+<!-- 연구노트는 **기록**이다. 보고서와 목적이 다르다:
+       보고서 — 결론을 설득한다. 요약이 먼저.
+       연구노트 — 무엇을 했고 무엇이 나왔는지 **시간순으로** 남긴다.
+                  실패한 시도도 남긴다. 그게 다음 사람을 구한다.
+     그래서 doc-numbered 를 쓰되 장 번호가 곧 실험 번호가 된다. -->
+<body class="doc doc-numbered">
+
+<header>
+  <p class="eyebrow">CREFLE · 연구노트</p>
+  <h1>연구노트 — 주제</h1>
+  <p class="lede">무엇을 알아내려 하는가. 한 문장.</p>
+
+  <table>
+    <tbody>
+      <tr><th>작성자</th><td>이름</td></tr>
+      <tr><th>기간</th><td>2026-07-01 ~ 2026-07-17</td></tr>
+      <tr><th>상태</th><td>진행 중</td></tr>
+    </tbody>
+  </table>
+</header>
+
+<h2>배경 · 가설</h2>
+
+<p>왜 이걸 보는가. 무엇을 예상하는가.</p>
+
+<div class="card-primary">
+  <h4>가설</h4>
+  <p>구체적이고 **틀릴 수 있게** 씁니다. "개선될 것이다" 는 가설이 아닙니다 —
+     "X 를 바꾸면 Y 가 20% 이상 오른다" 가 가설입니다.</p>
+</div>
+
+<!-- ══ 실험 블록 ═════════════════════════════════════════════════════════
+     연구노트의 핵심 단위. 실험 하나 = h2 하나.
+     가설 → 방법 → 결과 → 결론 네 칸을 **전부** 채웁니다.
+     결론이 "모르겠다" 여도 씁니다. 빈칸이 나중에 제일 비쌉니다. -->
+
+<h2>실험 1 — 짧은 이름</h2>
+
+<h3>방법</h3>
+<p>재현 가능하게. 다른 사람이 그대로 따라할 수 있어야 합니다.</p>
+<pre><code>$ 실행한 명령
+$ 조건: 모델 고정, 반복 15회</code></pre>
+
+<h3>결과</h3>
+
+<table>
+  <caption>실험 1 결과</caption>
+  <thead>
+    <tr><th>조건</th><th>측정값</th><th>비고</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>대조군</th><td class="num">49.5</td><td></td></tr>
+    <tr><th>실험군</th><td class="num"><strong>79.3</strong></td><td></td></tr>
+  </tbody>
+</table>
+
+<crefle-chart type="bar" title="실험 1 — 조건별 결과" unit="점">
+  {"series":[{"name":"측정값","data":[
+    {"label":"대조군","value":49.5},
+    {"label":"실험군","value":79.3}]}]}
+</crefle-chart>
+
+<h3>결론</h3>
+<div class="callout callout-success">
+  <p><strong>가설 지지.</strong> 무엇이 확인됐는지. 어디까지만 말할 수 있는지.</p>
+</div>
+
+<h2>실험 2 — 실패한 시도</h2>
+
+<h3>방법</h3>
+<p>실패도 기록합니다. 안 쓰면 다음 사람이 같은 벽에 부딪힙니다.</p>
+
+<h3>결과</h3>
+<div class="callout callout-error">
+  <p><strong>가설 기각.</strong> 무엇이 예상과 달랐는지. <strong>왜</strong> 그런지 알면 그것도.</p>
+</div>
+
+<h3>결론</h3>
+<p>여기서 배운 것. 다음에 무엇을 다르게 할 것인가.</p>
+
+<!-- ══ 미해결 ════════════════════════════════════════════════════════════
+     연구노트에만 있는 칸. 보고서는 결론을 내지만 연구노트는 **모르는 것**을 남긴다. -->
+<h2>미해결 · 다음</h2>
+
+<div class="callout callout-warning">
+  <p><strong>모르는 것.</strong> 아직 답하지 못한 질문. 추측이면 추측이라고 밝힙니다.</p>
+</div>
+
+<ol>
+  <li>다음에 확인할 것 1</li>
+  <li>다음에 확인할 것 2</li>
+</ol>
+
+<h2>참고</h2>
+<section class="footnotes">
+  <ol>
+    <li id="fn1">출처 · 관련 문서 · 원 논문.</li>
+  </ol>
+</section>
+
+<script src="./crefle-doc/crefle-chart.js"></script>
+</body>
+</html>

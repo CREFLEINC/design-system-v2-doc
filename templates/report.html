@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- ① 제목을 바꾸세요. 브라우저 탭과 PDF 메타데이터에 들어갑니다. -->
+<title>보고서 제목</title>
+
+<!-- ② 자산. 이 파일 옆에 crefle-doc/ 폴더가 있어야 합니다.
+        dist/crefle-doc/ 를 통째로 복사하세요. 경로를 CDN 으로 바꾸지 마세요 —
+        업로드 PDF 렌더러는 network_mode:"none" 이라 네트워크 자산이 100% 실패합니다. -->
+<link rel="stylesheet" href="./crefle-doc/crefle-doc.css">
+
+<style>
+  :root {
+    /* ③ 인쇄 시 매 페이지 머리에 찍힐 문자열. **따옴표를 포함**해서 쓰세요.
+          (표준 string-set 은 Chromium 이 지원하지 않아 var() 로 받습니다.)
+          표지(1페이지)에는 자동으로 안 찍힙니다. */
+    --doc-running-title: '보고서 제목';
+  }
+</style>
+</head>
+
+<!-- .doc          문서 스케일 스코프. 이게 없으면 아무 스타일도 안 걸립니다.
+     .doc-numbered 장·절·그림·표에 자동 번호. 번호가 필요 없으면 빼세요. -->
+<body class="doc doc-numbered">
+
+<!-- ══ 표지 ══════════════════════════════════════════════════════════════
+     .doc-cover 는 인쇄 시 한 장을 다 쓰고 다음 페이지에서 본문이 시작합니다. -->
+<header class="doc-cover">
+  <p class="eyebrow">CREFLE · 보고서</p>
+  <h1>보고서 제목</h1>
+  <p class="lede">한 줄 요약. 이 문서가 무엇을 다루고 무엇을 결론지었는지.</p>
+
+  <table>
+    <caption>문서 정보</caption>
+    <tbody>
+      <tr><th>작성자</th><td>이름</td></tr>
+      <tr><th>작성일</th><td>2026-07-17</td></tr>
+      <tr><th>버전</th><td>v1.0</td></tr>
+      <tr><th>대상</th><td>수신처</td></tr>
+    </tbody>
+  </table>
+</header>
+
+<!-- ══ 요약 ══════════════════════════════════════════════════════════════
+     읽는 사람은 대개 여기까지만 읽습니다. 결론을 먼저 씁니다. -->
+<h2>요약</h2>
+
+<p>
+  결론을 먼저 쓴다. 근거는 아래에. 숫자는 구체적으로 —
+  <strong>"약 30% 개선"</strong> 이 아니라 <strong>"49.5 → 79.3 (+60%)"</strong>.
+</p>
+
+<div class="kpi">
+  <div><span class="big">+60%</span><span class="lbl">핵심 지표 1</span></div>
+  <div><span class="big">15/15</span><span class="lbl">핵심 지표 2</span></div>
+  <div><span class="big">−32%</span><span class="lbl">핵심 지표 3</span></div>
+</div>
+
+<!-- ══ 본문 ══════════════════════════════════════════════════════════════ -->
+<h2>배경</h2>
+
+<p>
+  왜 이 일을 했는가. 문제가 무엇이었는가. 클래스를 붙이지 않아도 됩니다 —
+  <code>&lt;p&gt;</code> 는 그냥 본문(16px)이 되고 <code>&lt;h3&gt;</code> 는 절 제목(20px)이 됩니다.
+</p>
+
+<h3>현황</h3>
+
+<p>측정 가능한 사실만. 추정은 추정이라고 밝힙니다.</p>
+
+<ul>
+  <li>사실 1</li>
+  <li>사실 2
+    <ul><li>세부</li></ul>
+  </li>
+</ul>
+
+<div class="callout">
+  <p><strong>정보.</strong> semantic 색(info·success·warning·error)은 <strong>판정·상태·델타</strong>에만 씁니다. 장식으로 쓰지 마세요.</p>
+</div>
+
+<h2>방법</h2>
+
+<p>무엇을 어떻게 했는가. 재현 가능하게.</p>
+
+<pre><code>$ 명령어가 있으면 이렇게</code></pre>
+
+<h2>결과</h2>
+
+<!-- 표는 클래스 없이 그냥 <table>. 수치 열만 class="num" —
+     HTML 에 "이 칸은 숫자다"를 표현할 방법이 없어서입니다(우측정렬+등폭+자릿수 정렬). -->
+<table>
+  <caption>측정 결과</caption>
+  <thead>
+    <tr><th>항목</th><th>이전</th><th>이후</th><th>변화</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>지표 A</th><td class="num">49.5</td><td class="num"><strong>79.3</strong></td><td class="num">+60%</td></tr>
+    <tr><th>지표 B</th><td class="num">42.0</td><td class="num">78.0</td><td class="num">+86%</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><th>평균</th><td class="num">45.8</td><td class="num">78.7</td><td class="num">+72%</td></tr>
+  </tfoot>
+</table>
+
+<!-- 차트: JSON 은 인라인입니다. file:// 는 opaque origin 이라 fetch 가 차단됩니다.
+     · 단일 시리즈면 범례 없이 모든 막대가 브랜드 레드 + 직접 라벨이 붙습니다.
+     · 원형은 조각 4개까지 (all-pairs CVD 검증을 통과한 것이 앞 4슬롯뿐).
+     · type="bar" | "line" | "pie", unit 은 제목·라벨에 붙습니다(눈금은 맨 숫자). -->
+<crefle-chart type="bar" title="지표별 개선" caption="출처: 측정 2026-07" unit="점">
+  {"series":[{"name":"개선폭","data":[
+    {"label":"지표 A","value":29.8},
+    {"label":"지표 B","value":36.0}]}]}
+</crefle-chart>
+
+<h2>결론</h2>
+
+<p>요약과 같은 결론. 다르면 둘 중 하나가 틀렸습니다.</p>
+
+<div class="callout callout-warning">
+  <p><strong>한계.</strong> 무엇을 측정하지 않았는지, 무엇이 불확실한지 밝힙니다.</p>
+</div>
+
+<h2>다음 단계</h2>
+
+<ol>
+  <li>할 일 1</li>
+  <li>할 일 2</li>
+</ol>
+
+<!-- ══ 개정 이력 ═════════════════════════════════════════════════════════ -->
+<h2>개정 이력</h2>
+
+<table>
+  <caption>개정 이력</caption>
+  <thead>
+    <tr><th>버전</th><th>날짜</th><th>변경</th><th>작성자</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>v1.0</th><td>2026-07-17</td><td>최초 작성</td><td>이름</td></tr>
+  </tbody>
+</table>
+
+<!-- ══ 각주 ══════════════════════════════════════════════════════════════
+     Chromium 은 페이지 하단 각주(CSS GCPM float:footnote)를 지원하지 않습니다.
+     문서 끝 미주로 씁니다. 본문에서는 <a class="fn-ref" href="#fn1">1</a> 로 참조. -->
+<section class="footnotes">
+  <ol>
+    <li id="fn1">각주 내용. 출처나 부연.</li>
+  </ol>
+</section>
+
+<script src="./crefle-doc/crefle-chart.js"></script>
+</body>
+</html>
