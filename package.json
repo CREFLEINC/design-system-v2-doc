@@ -18,11 +18,13 @@
     "check:foundation:upstream": "node scripts/check-foundation.mjs --upstream",
     "check:licenses": "node scripts/check-licenses.mjs",
     "check:fonts": "node scripts/check-fonts.mjs",
-    "check:dist": "node scripts/build.mjs && git diff --exit-code -- dist/",
+    "check:dist": "node scripts/check-dist.mjs",
     "sync-foundation": "node scripts/sync-foundation.mjs",
-    "check": "npm run check:foundation && npm run check:licenses && npm run check:fonts && npm run typecheck && npm test && npm run lint:tokens && npm run check:dist"
+    "check": "npm run check:foundation && npm run check:licenses && npm run check:fonts && npm run typecheck && npm test && npm run lint:tokens && npm run check:dist && npm run test:e2e",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "1.60.0",
     "@types/node": "^26.1.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"

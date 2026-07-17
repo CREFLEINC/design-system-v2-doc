@@ -1,12 +1,25 @@
 #!/usr/bin/env node
 // 토큰 규율 게이트. web-ui 의 scripts/check-tokens.mjs 를 문서 DS 에 맞게 확장했다.
 //
-// 다섯 규칙:
+// 여섯 규칙:
 //   A. 파운데이션 토큰 재정의 금지  ← 이 repo 의 존재 이유. 가장 중요하다.
 //   B. raw 색상 금지 (CSS + HTML 의 style= 속성까지)
 //   C. 임의 px 금지 (0/1/2 제외)
 //   D. 정의되지 않은 var(--token) 참조 금지
 //   E. Spoqa 에 없는 굵기(600/800) 금지 — 브라우저가 합성해 인쇄에서 뭉갠다
+//   F. JS(웹컴포넌트 shadow CSS)의 **유채색** 금지 — 중립 크롬은 허용
+//
+// 규칙 F 가 왜 있나 — 이것도 실측된 사고다:
+//   deck-stage.js 를 이관할 때 shadow CSS 에서 #D97757 · #c96442 · rgba(166,50,68) 이
+//   발견됐다. Anthropic/Claude 의 코럴 계열이다 — CREFLE 브랜드가 아니다. 게다가
+//   의미 있는 자리에 있었다: #D97757 은 "현재 슬라이드" 선택 강조(=브랜드 강조색이어야 함),
+//   #c96442 는 삭제 버튼(=파운데이션 --semantic-error 여야 함).
+//   파운데이션의 "개념 동등 = 색 동등" 규칙 위반이었고, 린터가 .js 를 안 봐서 숨어 있었다.
+//
+//   그런데 크롬(레터박스 검정, 레일 회색, 알파 흰색)까지 토큰을 강요하면 규칙을 위한
+//   규칙이 된다 — 레터박스는 비디오 관례상 검정이 맞고 브랜드 표면이 아니다.
+//   그래서 경계를 색상성(chroma)에 둔다: **중립은 크롬, 유채색은 브랜드.**
+//   유채색이 JS 에 하드코딩돼 있으면 그건 브랜드 결정이 코드에 숨은 것이다.
 //
 // 규칙 A 가 왜 있나:
 //   CREFLE 문서의 브랜드 강조색은 한때 네 갈래였다 — 파운데이션 #C9252C,
@@ -43,6 +56,16 @@ const REDEFINE_ALLOW = new Map([
 // 토큰 레이어는 raw hex/px 를 정의하는 것이 본업이다 — 규칙 B·C 면제. 규칙 A·D 는 적용.
 const TOKEN_LAYER = new Set(['styles/doc-tokens.css'])
 
+// 런타임에 JS 가 setProperty 로 주입하는 커스텀 프로퍼티. CSS 에 정의가 없는 것이 정상이므로
+// 규칙D(정의되지 않은 토큰) 대상에서 뺀다. 디자인 토큰이 아니라 컴포넌트의 내부 API 다.
+// 반드시 CSS 쪽에서 폴백을 주고 써야 한다: var(--deck-design-w, var(--slide-canvas-w))
+const RUNTIME_TOKENS = new Map([
+  ['--deck-design-w', 'deck-stage.js:790 — width 속성에서 계산해 .canvas 에 주입 (기본 1920)'],
+  ['--deck-design-h', 'deck-stage.js:791 — height 속성에서 계산해 .canvas 에 주입 (기본 1080)'],
+  ['--deck-aspect', 'deck-stage.js:793 — 썸네일 레일 비율'],
+  ['--deck-rail-w', 'deck-stage.js — 레일 폭 (localStorage 에서 복원)']
+])
+
 /** @type {string[]} */
 const errors = []
 /** 줄 번호를 보존한 채 CSS 주석 제거. @param {string} t @returns {string} */
@@ -76,11 +99,13 @@ if (!existsSync(mirrorCss)) {
   console.error('✗ styles/foundation/tokens.css 가 없습니다. npm run sync-foundation 을 먼저 실행하세요.')
   process.exitCode = 1
 } else {
+  // ⚠️ 줄 단위로 쪼개 파싱하지 말 것. 파운데이션의 --brand-gradient-dark 는
+  //    linear-gradient(...) 가 네 줄에 걸쳐 있어(tokens.css:31-34) 줄 단위 정규식이
+  //    놓친다. 그러면 (a) 규칙A 가 그 토큰의 재정의를 못 막고 (b) 규칙D 가 정당한
+  //    사용을 "정의되지 않음"으로 오탐한다. 실제로 이 버그가 있었다 — 30/31 종만 읽었다.
+  //    전체 텍스트에 대해 매칭한다([^;] 는 개행을 포함하므로 여러 줄 값도 잡는다).
   const text = stripComments(readFileSync(mirrorCss, 'utf8'))
-  for (const line of text.split('\n')) {
-    const m = /^\s*(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/.exec(line)
-    if (m) mirrorTokens.set(m[1], m[2].trim())
-  }
+  for (const m of text.matchAll(/(--[a-zA-Z0-9-]+)\s*:\s*([^;]+);/g)) mirrorTokens.set(m[1], m[2].trim().replace(/\s+/g, ' '))
 }
 
 /** @type {Set<string>} */
@@ -167,8 +192,61 @@ for (const abs of files) {
 }
 
 // ── 규칙 D: 정의되지 않은 토큰 참조 ────────────────────────────────────────
-for (const r of references)
-  if (!definitions.has(r.name)) errors.push(`${r.at} 규칙D — 정의되지 않은 토큰 참조: ${r.name}`)
+for (const r of references) {
+  if (definitions.has(r.name) || RUNTIME_TOKENS.has(r.name)) continue
+  errors.push(`${r.at} 규칙D — 정의되지 않은 토큰 참조: ${r.name}`)
+}
+
+// ── 규칙 F: JS 의 유채색 ───────────────────────────────────────────────────
+// 중립(회색조)은 크롬으로 허용, 유채색은 브랜드 결정이므로 토큰이어야 한다.
+/** 색 문자열 → [r,g,b] 또는 null. @param {string} t @returns {number[] | null} */
+function rgbOf(t) {
+  const hex = /^#([0-9a-fA-F]{3,8})$/.exec(t)
+  if (hex) {
+    let h = hex[1]
+    if (h.length === 3 || h.length === 4) h = h.slice(0, 3).split('').map((c) => c + c).join('')
+    if (h.length < 6) return null
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16))
+  }
+  const fn = /^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/.exec(t)
+  return fn ? [Number(fn[1]), Number(fn[2]), Number(fn[3])] : null
+}
+/** 회색조인가 (크롬으로 허용). @param {number[]} c @returns {boolean} */
+const isNeutral = (c) => Math.max(...c) - Math.min(...c) <= 6
+
+/** @type {string[]} */
+const jsFiles = []
+{
+  /** @param {string} dir */
+  const walkJs = (dir) => {
+    if (!existsSync(dir)) return
+    for (const name of readdirSync(dir).sort()) {
+      if (SKIP_DIRS.has(name)) continue
+      const p = join(dir, name)
+      if (statSync(p).isDirectory()) walkJs(p)
+      else if (/\.js$/i.test(p)) jsFiles.push(p)
+    }
+  }
+  walkJs(join(ROOT, 'src'))
+}
+
+for (const abs of jsFiles) {
+  const rel = relative(ROOT, abs).split('\\').join('/')
+  // JS 는 블록주석 + 라인주석 둘 다 지운다 (줄 번호 보존).
+  const text = stripComments(readFileSync(abs, 'utf8')).replace(/^([^\n'"`]*?)\/\/.*$/gm, '$1')
+  text.split('\n').forEach((line, i) => {
+    for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)/g)) {
+      const c = rgbOf(m[0])
+      if (!c || isNeutral(c)) continue
+      errors.push(
+        `${rel}:${i + 1} 규칙F — JS 에 유채색 하드코딩: ${m[0]}\n` +
+          `      중립(회색조)은 크롬으로 허용되지만 유채색은 브랜드 결정입니다 — 토큰을 쓰세요.\n` +
+          `      var(--token) 은 shadow DOM 경계를 넘어 상속됩니다.\n` +
+          `      (deck-stage.js 에 Anthropic 코럴 #D97757 이 "현재 슬라이드" 강조로 숨어 있었습니다.)`
+      )
+    }
+  })
+}
 
 if (errors.length) {
   console.error('✗ 토큰 검사 실패\n')
@@ -176,7 +254,7 @@ if (errors.length) {
   process.exitCode = 1
 } else {
   console.log(
-    `✓ 토큰 규율 OK — ${files.length}개 파일, 파운데이션 토큰 ${mirrorTokens.size}종 무결, ` +
+    `✓ 토큰 규율 OK — CSS·HTML ${files.length}개 + JS ${jsFiles.length}개, 파운데이션 토큰 ${mirrorTokens.size}종 무결, ` +
       `참조 ${references.length}건 전부 정의됨` +
       (REDEFINE_ALLOW.size ? ` (문서화된 오버라이드 ${REDEFINE_ALLOW.size}종 제외)` : '')
   )
