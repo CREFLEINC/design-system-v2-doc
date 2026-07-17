@@ -1,0 +1,479 @@
+/* ============================================================================
+   CREFLE 문서 DS — 문서 레이어
+
+   스코프: `.doc` 안에서만 문서 스케일이 적용된다. deck.css 의 `.slide` 와 같은
+   스타일시트에 있어도 충돌하지 않는다 — 서로의 스코프에 들어가지 않기 때문이다.
+
+   ┌─ 이 파일의 설계 원칙 ─────────────────────────────────────────────────┐
+   │  **시맨틱 HTML 이 클래스 없이 맞는다.**                                │
+   │                                                                        │
+   │  이 문서들을 쓰는 건 Claude 다. LLM 은 <h2>배경</h2><p>본문…</p> 을     │
+   │  자연스럽게 쓴다. DS 가 <p class="t-body"> 를 요구하면 누락 하나하나가   │
+   │  조용한 드리프트이고, 모델은 반드시 누락한다.                            │
+   │                                                                        │
+   │  → h1~h4 · p · small · strong · em · blockquote · ul/ol · table ·      │
+   │    figure/figcaption · code/pre 가 .doc 안에서 **기본값으로** 맞는다.   │
+   │    **LLM 의 기본 출력이 이미 정답이다.**                                │
+   │                                                                        │
+   │  역할 클래스는 HTML 에 대응 엘리먼트가 **없는 것**에만 둔다:            │
+   │    .eyebrow · .lede · .kpi · .callout · .capsule · .label-pill         │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   실증: 참조 덱(49슬라이드)은 `section`(42회) · `sub`(9회) · `title-xl`(7회) 클래스를
+   썼는데, 이 설계에선 **전부 필요 없다** — h2/h3 와 .display 가 대신한다.
+   클래스 58개 중 셋이 통째로 사라진다.
+   ============================================================================ */
+
+/* ── 문서 루트 ────────────────────────────────────────────────────────────
+   .doc 를 <body> 나 <article> 에 붙인다. 스코프 루트이자 지면이다. */
+.doc {
+  background: var(--surface);
+  color: var(--on-surface);
+  font: var(--w-regular) var(--text-body) / var(--leading-body) var(--font-sans);
+  /* 본문 줄길이 상한 — 넘으면 눈이 다음 줄을 못 찾는다. 표·차트는 아래에서 푼다. */
+  max-width: var(--doc-measure);
+  margin: 0 auto;
+  padding: var(--s-12) var(--s-6);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+
+/* 표·차트·코드는 줄길이 제약을 벗어난다 — 데이터는 넓어야 읽힌다. */
+.doc > table,
+.doc > figure,
+.doc > pre,
+.doc > .kpi,
+.doc > crefle-chart {
+  max-width: none;
+}
+
+/* ── 타이포 — 클래스 없이 ────────────────────────────────────────────────
+   spec mandate(제목 20 / 본문 16 / 본문 작은 12)를 앵커로 6단계로 확장했다.
+   매핑: h1 문서제목 30 · h2 장 24 · h3 절 20(앵커) · h4 항 17 · p 16(앵커) · small 12(앵커) */
+
+.doc h1 {
+  font-size: var(--text-doc-title);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  margin: 0 0 var(--s-6);
+}
+
+.doc h2 {
+  font-size: var(--text-chapter);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  margin: var(--s-12) 0 var(--s-4);
+}
+
+.doc h3 {
+  font-size: var(--text-section); /* 20px — spec mandate "제목" */
+  font-weight: var(--w-medium);
+  line-height: var(--leading-snug);
+  margin: var(--s-8) 0 var(--s-3);
+}
+
+.doc h4 {
+  font-size: var(--text-sub);
+  font-weight: var(--w-medium);
+  line-height: var(--leading-snug);
+  margin: var(--s-6) 0 var(--s-2);
+}
+
+/* 제목이 문단 바로 뒤에 오면 위 여백이 이중이 된다 — 첫 제목은 붙인다. */
+.doc > :first-child {
+  margin-top: 0;
+}
+
+.doc p {
+  margin: 0 0 var(--s-4);
+}
+
+.doc small,
+.doc figcaption {
+  font-size: var(--text-small); /* 12px — spec mandate "본문 작은" */
+  line-height: var(--leading-snug);
+  color: var(--on-surface-muted);
+}
+
+.doc strong {
+  font-weight: var(--w-bold);
+}
+.doc em {
+  font-style: italic;
+}
+
+.doc a {
+  color: var(--primary);
+  text-underline-offset: 2px;
+}
+/* 인쇄본에서 링크는 클릭할 수 없다 — URL 을 보여준다. */
+@media print {
+  .doc a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: var(--text-small);
+    color: var(--on-surface-muted);
+    word-break: break-all;
+  }
+}
+
+/* ── 목록 ───────────────────────────────────────────────────────────────── */
+.doc ul,
+.doc ol {
+  margin: 0 0 var(--s-4);
+  padding-left: var(--s-6);
+}
+.doc li {
+  margin-bottom: var(--s-2);
+}
+.doc li > ul,
+.doc li > ol {
+  margin-top: var(--s-2);
+  margin-bottom: 0;
+}
+
+/* ── 인용 ───────────────────────────────────────────────────────────────── */
+.doc blockquote {
+  margin: var(--s-6) 0;
+  padding: 0 0 0 var(--s-5);
+  border-left: 2px solid var(--primary);
+  color: var(--on-surface-variant);
+}
+.doc blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── 코드 ───────────────────────────────────────────────────────────────── */
+.doc code {
+  font-family: var(--font-mono);
+  font-size: 0.92em; /* 상대값 — 주변 텍스트 크기를 따라간다 */
+  background: var(--surface-container);
+  padding: 0.1em 0.4em;
+  border-radius: var(--radius-xs);
+}
+
+.doc pre {
+  margin: var(--s-5) 0;
+  padding: var(--s-5);
+  border-radius: var(--radius-md);
+  background: var(--brand-charcoal-deep);
+  color: var(--surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  line-height: var(--leading-body);
+  overflow-x: auto;
+  /* 코드 블록은 페이지 중간에서 잘리면 못 읽는다. */
+  break-inside: avoid;
+}
+.doc pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* ── 표 — 클래스 없이 ────────────────────────────────────────────────────
+   참조 덱은 `table.kv` 클래스를 12번 썼다. 여기선 <table> 이 그냥 맞는다. */
+.doc table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--s-5) 0;
+  font-size: var(--text-body);
+}
+
+.doc th,
+.doc td {
+  padding: var(--s-3) var(--s-4);
+  text-align: left;
+  border-bottom: 1px solid var(--outline-variant);
+  vertical-align: top;
+}
+
+.doc thead th {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--on-surface);
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--outline);
+}
+
+/* 행 머리(첫 열이 <th>)는 라벨이다 — 대문자로 만들지 않는다. */
+.doc tbody th {
+  font-weight: var(--w-medium);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  text-transform: none;
+  letter-spacing: normal;
+  background: none;
+}
+
+.doc tbody tr:last-child td,
+.doc tbody tr:last-child th {
+  border-bottom: none;
+}
+
+.doc tfoot td,
+.doc tfoot th {
+  border-top: 1px solid var(--outline);
+  border-bottom: none;
+  font-weight: var(--w-bold);
+  background: var(--surface-container-low);
+}
+
+.doc caption {
+  caption-side: top;
+  text-align: left;
+  font-size: var(--text-small);
+  color: var(--on-surface-muted);
+  padding-bottom: var(--s-2);
+}
+
+/* 수치 열 — 오른쪽 정렬 + 등폭. 자릿수가 맞아야 크기를 비교할 수 있다.
+   <td class="num"> 또는 <td data-num>. HTML 에 "이건 숫자다"를 표현할 방법이 없다. */
+.doc td.num,
+.doc td[data-num],
+.doc th.num {
+  font-family: var(--font-mono);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.doc td.num strong {
+  color: var(--primary); /* 5.27:1 on --surface — AA 통과 */
+}
+
+/* 인쇄 시 표가 페이지를 넘으면 머리를 반복한다 (Chromium 이 thead 를 자동 반복). */
+@media print {
+  .doc thead {
+    display: table-header-group;
+  }
+  .doc tr {
+    break-inside: avoid;
+  }
+}
+
+/* ── figure ─────────────────────────────────────────────────────────────── */
+.doc figure {
+  margin: var(--s-6) 0;
+  break-inside: avoid;
+}
+.doc figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.doc figcaption {
+  margin-top: var(--s-2);
+}
+
+.doc hr {
+  border: none;
+  border-top: 1px solid var(--outline-variant);
+  margin: var(--s-10) 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   역할 클래스 — HTML 에 대응 엘리먼트가 **없는** 것만.
+   여기에 뭔가 추가하기 전에: "정말 시맨틱 HTML 로 표현할 수 없나?" 를 먼저 묻는다.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* eyebrow — 제목 위의 분류 라벨. <h5> 로 쓰면 문서 개요가 오염된다. */
+.doc .eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--w-medium);
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--primary);
+  margin: 0 0 var(--s-2);
+}
+
+/* lede — 제목 아래 요약. <p> 지만 크기가 다르다. */
+.doc .lede {
+  font-size: var(--text-sub);
+  line-height: var(--leading-snug);
+  color: var(--on-surface-variant);
+  margin: 0 0 var(--s-6);
+}
+
+/* ── 카드 4종 ─────────────────────────────────────────────────────────────
+   참조 덱은 카드를 53회 썼다(filled 18 · elev 17 · outline 10 · primary 8).
+   원본은 배경에 `#fff` 를 썼지만 파운데이션이 **순수 흰색을 금지**한다
+   ("순수 #FFFFFF 금지. 약한 마젠타 기 도는 warm-cool white 사용").
+   → M3 방식으로 **톤으로 띄운다**: surface-container 사다리를 쓴다. */
+.doc .card {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--s-6) var(--s-8);
+  background: var(--surface-container-low);
+  break-inside: avoid;
+}
+.doc .card-filled {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--s-6) var(--s-8);
+  background: var(--surface-container);
+  break-inside: avoid;
+}
+.doc .card-elev {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--s-6) var(--s-8);
+  background: var(--surface-container-low);
+  /* 무거운 보더와 깊은 그림자를 함께 쓰지 않는다 — 하나만 고른다 (README §Rule 3). */
+  box-shadow: var(--elev-2);
+  break-inside: avoid;
+}
+.doc .card-outline {
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  padding: var(--s-5) var(--s-6);
+  background: transparent;
+  break-inside: avoid;
+}
+.doc .card-primary {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--s-6) var(--s-8);
+  background: var(--primary-container);
+  /* 파운데이션엔 --on-primary-container 가 없다(가이드의 승격 후보).
+     새 hex 를 만들 필요가 없다 — --brand-red-deep 이 이미 8.11:1 로 AA 를 통과한다.
+     참조 덱은 #3B0608 을 발명했지만 불필요했다. */
+  color: var(--brand-red-deep);
+  break-inside: avoid;
+}
+.doc .card > :first-child,
+.doc .card-filled > :first-child,
+.doc .card-elev > :first-child,
+.doc .card-outline > :first-child,
+.doc .card-primary > :first-child { margin-top: 0; }
+.doc .card > :last-child,
+.doc .card-filled > :last-child,
+.doc .card-elev > :last-child,
+.doc .card-outline > :last-child,
+.doc .card-primary > :last-child { margin-bottom: 0; }
+
+/* ── 콜아웃 — 개념 동등 = 색 동등 (파운데이션 Rule 1) ──────────────────────
+   semantic 색은 **판정·상태·델타**에만. 장식으로 쓰지 않는다. */
+.doc .callout {
+  margin: var(--s-5) 0;
+  padding: var(--s-4) var(--s-5);
+  border-left: 2px solid var(--semantic-info);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--surface-container-low);
+  break-inside: avoid;
+}
+.doc .callout > :first-child { margin-top: 0; }
+.doc .callout > :last-child { margin-bottom: 0; }
+.doc .callout-success { border-left-color: var(--semantic-success); }
+.doc .callout-warning { border-left-color: var(--semantic-warning); }
+.doc .callout-error { border-left-color: var(--semantic-error); }
+
+/* ── KPI 넘버 콜아웃 ──────────────────────────────────────────────────────
+   참조 덱에서 11회. 큰 숫자 하나가 문장 열 개보다 강하다. */
+.doc .kpi {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-3), 1fr));
+  gap: var(--s-5);
+  margin: var(--s-6) 0;
+}
+.doc .kpi > * {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--s-5) var(--s-6);
+  background: var(--surface-container-low);
+  break-inside: avoid;
+}
+.doc .kpi .big {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--text-doc-title);
+  /* 참조 덱은 800 을 썼지만 번들 JetBrains Mono 는 400/500/700 뿐이다 —
+     800 은 브라우저가 합성(faux bold)해 인쇄에서 뭉갠다. lint:tokens 규칙E 가 막는다. */
+  font-weight: var(--w-bold);
+  line-height: 1;
+  letter-spacing: var(--tracking-tight);
+  color: var(--primary); /* 5.00:1 on --surface-container-low — AA 통과 */
+  margin-bottom: var(--s-2);
+}
+.doc .kpi .lbl {
+  display: block;
+  font-size: var(--text-small);
+  line-height: var(--leading-snug);
+  color: var(--on-surface-muted);
+}
+
+/* ── 캡슐 · 라벨 필 ─────────────────────────────────────────────────────── */
+.doc .capsule,
+.doc .label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-1) var(--s-3);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: var(--text-small);
+  font-weight: var(--w-medium);
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-low);
+  color: var(--on-surface-variant);
+}
+.doc .label-pill {
+  letter-spacing: var(--tracking-eyebrow);
+  text-transform: uppercase;
+}
+/* before/after 대조 — 참조 덱에서 6회. */
+.doc .label-before {
+  background: var(--surface-container-high);
+  color: var(--on-surface-muted);
+}
+.doc .label-after {
+  background: var(--primary-container);
+  color: var(--brand-red-deep);
+  border-color: transparent;
+}
+
+/* ── bigquote — 한 문장이 슬라이드 하나를 차지할 때 ────────────────────── */
+.doc .bigquote {
+  font-size: var(--text-chapter);
+  font-weight: var(--w-bold);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-tight);
+  margin: var(--s-8) 0;
+  padding: 0;
+  border: none;
+  color: var(--on-surface);
+}
+.doc .bigquote .accent {
+  color: var(--primary);
+}
+
+/* ── 그리드 — 4pt 그리드 위에서만 ───────────────────────────────────────── */
+.doc .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-2), 1fr)); gap: var(--s-5); }
+.doc .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(var(--grid-min-3), 1fr)); gap: var(--s-5); }
+
+/* ── 인쇄 ───────────────────────────────────────────────────────────────── */
+@media print {
+  .doc {
+    /* 인쇄 지면은 @page 가 관리한다 — 화면용 여백·줄길이 제약을 푼다. */
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  /* 제목이 페이지 맨 아래 홀로 남지 않게. */
+  .doc h1,
+  .doc h2,
+  .doc h3,
+  .doc h4 {
+    break-after: avoid;
+  }
+  .doc p,
+  .doc li {
+    orphans: 3;
+    widows: 3;
+  }
+}

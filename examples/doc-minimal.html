@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CREFLE 문서 — 최소 예제</title>
+<link rel="stylesheet" href="../dist/crefle-doc/crefle-doc.css">
+</head>
+<body class="doc">
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     아래 "1부" 는 **표의 수치 열(class="num") 3곳을 빼면 클래스가 없다.**
+     실측: 46개 요소 중 클래스가 붙은 것은 3개 — 전부 `num` 이다.
+     그건 HTML 에 "이 칸은 숫자다"를 표현할 방법이 없어서다(오른쪽 정렬 + 등폭 +
+     tabular-nums 가 필요하다). 즉 남은 클래스조차 이 DS 의 규칙을 지킨 결과다.
+
+     이 DS 의 핵심 주장이다: Claude 는 <h2>배경</h2><p>본문…</p> 을 자연스럽게
+     쓴다. DS 가 <p class="t-body"> 를 요구하면 누락 하나하나가 조용한 드리프트다.
+     시맨틱 HTML 이 기본값으로 맞으면 **LLM 의 기본 출력이 이미 정답**이다.
+
+     실증: 참조 덱은 section(42회)·sub(9회)·title-xl(7회) 클래스를 썼는데
+     이 설계에선 전부 필요 없다.
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<h1>하네스 엔지니어링 도입 보고서</h1>
+
+<p>
+  모델만으로는 부족하다. 이 문서는 하네스를 도입한 뒤의 측정 결과를 기록한다.
+  <strong>이 문단부터 아래 표까지, 클래스는 수치 열 표시 3곳뿐이다</strong> — 46개 요소 중 3개.
+</p>
+
+<h2>배경</h2>
+
+<p>
+  Claude Code 코드베이스에서 AI 의사결정 로직이 차지하는 비중은 <code>1.6%</code> 다.
+  나머지 <code>98.4%</code> 는 권한·컨텍스트·샌드박스·라우터·복구 인프라 — 즉 하네스다.
+</p>
+
+<blockquote>
+  <p>한 번만 사용되는 코드에 추상화를 적용하지 말라.</p>
+</blockquote>
+
+<h3>측정 방법</h3>
+
+<p>동일 모델(Opus 4.5)로 하네스만 바꿔 CORE 벤치마크를 돌렸다. 조건은 다음과 같다.</p>
+
+<ul>
+  <li>모델·프롬프트·과제는 고정</li>
+  <li>하네스만 교체
+    <ul>
+      <li>Claude Code 하네스</li>
+      <li>Smolagents 하네스</li>
+    </ul>
+  </li>
+  <li>각 15회 반복, 중앙값 사용</li>
+</ul>
+
+<h4>결과</h4>
+
+<table>
+  <caption>표 1. CORE 벤치마크 — 동일 Opus 4.5</caption>
+  <thead>
+    <tr><th>하네스</th><th>정확도</th><th>비고</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>Claude Code</th><td class="num"><strong>78%</strong></td><td>권한·복구 인프라 포함</td></tr>
+    <tr><th>Smolagents</th><td class="num">42%</td><td>최소 구성</td></tr>
+  </tbody>
+  <tfoot>
+    <tr><th>차이</th><td class="num">+36%p</td><td>모델은 동일</td></tr>
+  </tfoot>
+</table>
+
+<p><small>출처: Hwang, M. (2026). <em>Harness: Structured Pre-Configuration for Enhancing LLM Code Agent Output Quality.</em></small></p>
+
+<pre><code>$ npm run check
+✓ 파운데이션 미러 무결성 OK — 7개 파일 @ 3a2ee96
+✓ 차트 팔레트 OK — 검증된 8슬롯 유지</code></pre>
+
+<hr>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     2부 — 역할 클래스. HTML 에 대응 엘리먼트가 **없는** 것만.
+     여기 뭔가 추가하기 전에 "정말 시맨틱 HTML 로 표현할 수 없나?" 를 먼저 묻는다.
+     ══════════════════════════════════════════════════════════════════════ -->
+
+<p class="eyebrow">2부 · 역할 클래스</p>
+<h2>HTML 에 없는 것만 클래스로</h2>
+<p class="lede">eyebrow 를 &lt;h5&gt; 로 쓰면 문서 개요가 오염된다. lede 는 &lt;p&gt; 지만 크기가 다르다.</p>
+
+<h3>KPI</h3>
+<div class="kpi">
+  <div><span class="big">+60%</span><span class="lbl">평균 품질 점수 개선<br>(49.5 → 79.3)</span></div>
+  <div><span class="big">15/15</span><span class="lbl">하네스 적용판의 승률<br>모든 과제에서 우위</span></div>
+  <div><span class="big">−32%</span><span class="lbl">출력 분산 감소<br>재현성 향상</span></div>
+</div>
+
+<h3>카드</h3>
+<div class="grid-2">
+  <div class="card"><h4>outlined</h4><p>1px 보더 + 톤. 기본 카드다.</p></div>
+  <div class="card-filled"><h4>filled</h4><p>보더 없이 톤만으로 띄운다.</p></div>
+  <div class="card-elev"><h4>elevated</h4><p>그림자로 띄운다. 보더와 함께 쓰지 않는다.</p></div>
+  <div class="card-primary"><h4>primary</h4><p>브랜드 컨테이너. 강조 하나에만.</p></div>
+</div>
+
+<h3>콜아웃 — 개념 동등 = 색 동등</h3>
+<div class="callout"><p><strong>정보.</strong> semantic 색은 판정·상태·델타에만 쓴다.</p></div>
+<div class="callout callout-success"><p><strong>성공.</strong> 양품 / Pass / OK 는 어디서나 같은 색이다.</p></div>
+<div class="callout callout-warning"><p><strong>주의.</strong> 장식으로 쓰지 않는다.</p></div>
+<div class="callout callout-error"><p><strong>오류.</strong> 불량 / Fail / NG.</p></div>
+
+<h3>라벨 · 캡슐</h3>
+<p>
+  <span class="label-pill label-before">Before</span>
+  <span class="label-pill label-after">After</span>
+  <span class="capsule">2026.07.17</span>
+  <span class="capsule">Opus 4.5</span>
+</p>
+
+<h3>차트</h3>
+<p>차트는 줄길이 제약을 벗어난다 — 데이터는 넓어야 읽힌다.</p>
+<crefle-chart type="bar" title="난이도별 품질 점수 개선" caption="출처: Hwang, M. (2026)" unit="점">
+  {"series":[{"name":"품질 점수 개선","data":[
+    {"label":"Basic","value":23.8},
+    {"label":"Advanced","value":29.6},
+    {"label":"Expert","value":36.2}]}]}
+</crefle-chart>
+
+<blockquote class="bigquote">
+  모델만으로는 부족하다. 모델을 둘러싼 <span class="accent">모든 것</span>을 설계하라.
+</blockquote>
+
+<script src="../dist/crefle-doc/crefle-chart.js"></script>
+</body>
+</html>
