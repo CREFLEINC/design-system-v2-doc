@@ -4,7 +4,7 @@
 
 **Goal:** Standardize five user-confirmed document metadata fields across all authoring templates and examples without allowing plausible guessed defaults.
 
-**Architecture:** Extend the existing `check:skill` contract gate to validate metadata structure in source artifacts, then update the four templates and authoring skill to satisfy that contract. Keep semantic tables as the shared markup; add only a deck-scoped visual treatment and use Playwright to protect the title-slide layout.
+**Architecture:** Extend the existing `check:skill` contract gate to validate metadata structure in rendered HTML source artifacts, then update the four templates and authoring skill to satisfy the feature requirements. Keep semantic tables as the shared markup; review agent-instruction prose directly instead of testing source strings, add only a deck-scoped visual treatment, and use Playwright to protect the title-slide layout.
 
 **Tech Stack:** HTML5, CSS, Node.js 20.19+ ES modules, Vitest/Playwright, npm scripts
 
@@ -33,7 +33,7 @@
 
 **Interfaces:**
 - Consumes: source HTML under `templates/` and the authoring instructions in `skills/crefle-doc/SKILL.md`.
-- Produces: `npm run check:skill` exits non-zero when a template lacks the ordered metadata contract or uses plausible defaults; all four templates expose `table[data-document-info]`.
+- Produces: `npm run check:skill` exits non-zero when a template lacks the ordered metadata contract or uses plausible defaults; all four templates expose `table[data-document-info]`; review verifies the authoring instructions without brittle source-string assertions.
 
 - [ ] **Step 1: Add the failing contract checks**
 
@@ -41,8 +41,6 @@ In `scripts/check-skill.mjs`, define literal requirements and validate real sour
 
 ```js
 const DOCUMENT_INFO_LABELS = ['작성자', '작성일', '작성시간', '문서 버전', '열람 대상']
-const DOCUMENT_INFO_PLACEHOLDER = '[사용자 확인 필요]'
-const DOCUMENT_INFO_COMMENT = '사용자 확인 전 기입 금지'
 
 for (const f of readdirSync(tplDir).sort()) {
   const t = readFileSync(join(tplDir, f), 'utf8')
@@ -61,13 +59,13 @@ for (const f of readdirSync(tplDir).sort()) {
 }
 ```
 
-Also validate that the skill contains the ordered confirmation step, `추측·유추·기본값` prohibition, `HH:mm`, system date/time proposal requiring confirmation, and all four audience suggestions. Use clear `problems.push(...)` messages for each missing contract.
+Do not grep `SKILL.md` for exact prose. Agent instructions are reviewed against the task requirements because this repository has no behavioral agent harness; source-string assertions would only detect wording changes.
 
 - [ ] **Step 2: Run the contract gate and verify RED**
 
 Run: `npm run check:skill`
 
-Expected: FAIL because each template lacks `table[data-document-info]` and the skill lacks the confirmation contract.
+Expected: FAIL because each template lacks `table[data-document-info]`.
 
 - [ ] **Step 3: Add the authoring confirmation step**
 
@@ -80,6 +78,8 @@ In `skills/crefle-doc/SKILL.md`, insert a step before “내용을 채운다” 
 - says unresolved values remain `[사용자 확인 필요]` in a draft or block completion.
 
 Renumber the following content and browser verification steps.
+
+During task review, compare this prose directly against all five bullets; do not add source-string assertions for it.
 
 - [ ] **Step 4: Implement the shared template contract**
 
