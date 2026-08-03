@@ -154,6 +154,33 @@
 .slide.dark .lede,
 .slide.divider .lede { color: var(--on-primary); opacity: 0.9; }
 
+/* ── 문서 정보 — 타이틀 슬라이드의 작성 메타데이터. ─────────────────────── */
+.slide table[data-document-info] {
+  width: 1280px;
+  max-width: 1584px;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: var(--slide-small);
+  color: inherit;
+}
+.slide table[data-document-info] th,
+.slide table[data-document-info] td {
+  padding: var(--s-1) var(--s-3);
+  text-align: left;
+  border: 1px solid var(--overlay-line);
+  vertical-align: top;
+}
+.slide table[data-document-info] th,
+.slide table[data-document-info] caption {
+  color: inherit;
+  opacity: 0.7;
+}
+.slide table[data-document-info] caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: var(--s-1);
+}
+
 /* ── 푸터 — 슬라이드 하단 고정. deck-stage 가 pageno 를 채우지 않으므로
    저자가 쓰거나 비워둔다(장식). ───────────────────────────────────────── */
 .slide > .footer {

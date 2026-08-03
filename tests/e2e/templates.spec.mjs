@@ -174,11 +174,24 @@ test('deck 템플릿 — 슬라이드당 1페이지, 1440×810pt', async ({ isol
 
   const d = await page.evaluate(() => {
     const el = /** @type {any} */ (document.querySelector('deck-stage'))
+    const info = document.querySelector('.slide.dark table[data-document-info]')
+    const slide = document.querySelector('.slide.dark')
+    const infoRect = info?.getBoundingClientRect()
+    const slideRect = slide?.getBoundingClientRect()
     return {
       upgraded: !!el?.shadowRoot,
       slides: el?.length,
       charts: document.querySelectorAll('crefle-chart figure').length,
-      chartErrors: document.querySelectorAll('.crefle-chart-error').length
+      chartErrors: document.querySelectorAll('.crefle-chart-error').length,
+      hasDocumentInfo: !!info,
+      documentInfoFits:
+        !!infoRect && !!slideRect &&
+        infoRect.left >= slideRect.left &&
+        infoRect.right <= slideRect.right &&
+        infoRect.top >= slideRect.top &&
+        infoRect.bottom <= slideRect.bottom,
+      documentInfoWidth: infoRect?.width,
+      documentInfoRows: info?.querySelectorAll('tbody tr').length
     }
   })
 
@@ -188,6 +201,11 @@ test('deck 템플릿 — 슬라이드당 1페이지, 1440×810pt', async ({ isol
   expect(d.charts, '덱 템플릿의 차트가 렌더되지 않았다').toBe(1)
   expect(d.chartErrors).toBe(0)
   expect(page.blocked).toEqual([])
+  expect(d.hasDocumentInfo, '덱 표지에 문서 정보 표가 없다').toBe(true)
+  expect(d.documentInfoRows).toBe(5)
+  expect(d.documentInfoFits, '덱 표지의 문서 정보 표가 슬라이드 밖으로 넘친다').toBe(true)
+  expect(d.documentInfoWidth, '덱 표지 문서 정보가 너무 좁어 값이 과도하게 줄바꿈된다').toBeGreaterThanOrEqual(640)
+  expect(d.documentInfoWidth, '덱 표지 문서 정보가 제목 영역을 잠식한다').toBeLessThanOrEqual(900)
 
   const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true })
   const raw = pdf.toString('latin1')
