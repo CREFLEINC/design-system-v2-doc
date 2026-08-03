@@ -259,7 +259,7 @@ git diff origin/main...HEAD --check
 git log --oneline origin/main..HEAD
 ```
 
-Expected: clean worktree, no whitespace errors, and only the design plus three implementation commits.
+Expected: clean worktree, no whitespace errors, and only commits belonging to Issue #10: design, implementation plan and its approved amendment, worktree safety, implementation, tests, and the reviewed token-compliance fix.
 
 - [ ] **Step 2: Push and create the PR**
 
