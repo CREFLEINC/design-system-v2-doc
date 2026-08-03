@@ -1,5 +1,6 @@
 node_modules/
 .DS_Store
+.worktrees/
 
 # dist/ 는 커밋한다 — gitignore 하지 말 것.
 #   (1) `check:dist` 가 재빌드 후 `git diff --exit-code -- dist/` 로 빌드 재현성을 증명한다.
