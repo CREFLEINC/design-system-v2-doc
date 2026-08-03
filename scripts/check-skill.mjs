@@ -26,6 +26,8 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const SKILL_DIR = join(ROOT, 'skills', 'crefle-doc')
 const CSS = join(ROOT, 'dist', 'crefle-doc', 'crefle-doc.css')
+const DOCUMENT_INFO_LABELS = ['작성자', '작성일', '작성시간', '문서 버전', '열람 대상']
+const APPROVED_AUDIENCES = new Set(['사내 한정', '프로젝트 관련자', '고객사 제출', '대외 공개'])
 
 /** @type {string[]} */
 const problems = []
@@ -86,6 +88,64 @@ if (!existsSync(CSS)) {
           `templates/${f} 의 자산 경로가 ./crefle-doc/ 가 아닙니다: ${p}\n` +
             `      스킬은 "번들을 문서 옆에 복사" 라고 가르칩니다. examples/ 의 ../dist/ 경로를 복사해 오면 저자에게서 깨집니다.`
         )
+    }
+  }
+
+  /** @param {string} block */
+  function documentInfoRows(block) {
+    return [...block.matchAll(/<tr>\s*<th>([^<]+)<\/th>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/g)]
+  }
+
+  /** @param {string} block @param {RegExpMatchArray[]} rows */
+  function hasExpectedLabels(block, rows) {
+    return (block.match(/<tr\b/g) || []).length === DOCUMENT_INFO_LABELS.length &&
+      rows.length === DOCUMENT_INFO_LABELS.length &&
+      rows.every((row, index) => row[1] === DOCUMENT_INFO_LABELS[index])
+  }
+
+  // ── 5) 문서 정보 계약 — 저자가 확인하기 전에는 추측값을 넣지 않는다
+  for (const f of readdirSync(tplDir).sort()) {
+    const t = readFileSync(join(tplDir, f), 'utf8')
+    const block = t.match(/<table data-document-info>[\s\S]*?<\/table>/)?.[0]
+    if (!block) {
+      problems.push(`templates/${f} 에 data-document-info 표가 없습니다.`)
+      continue
+    }
+    const rows = documentInfoRows(block)
+    if (!hasExpectedLabels(block, rows)) {
+      problems.push(`templates/${f} 의 문서 정보는 표준 순서의 <th>·<td> 쌍 5개여야 합니다.`)
+      continue
+    }
+    for (const [_, label, cell] of rows) {
+      const expectedComment = label === '작성시간'
+        ? '사용자 확인 전 기입 금지 · 24시간제 HH:mm'
+        : '사용자 확인 전 기입 금지'
+      if (!new RegExp(`^\\s*<!--\\s*${expectedComment}\\s*-->\\s*\\[사용자 확인 필요\\]\\s*$`).test(cell))
+        problems.push(`templates/${f} 의 ${label} 행은 ${expectedComment} 주석과 [사용자 확인 필요] placeholder를 함께 써야 합니다.`)
+    }
+  }
+
+  // ── 6) 완료 예제의 문서 정보 계약 — 템플릿과 같은 항목·순서로 실제 값을 보여 준다
+  for (const f of ['deck-minimal.html', 'doc-minimal.html']) {
+    const t = readFileSync(join(ROOT, 'examples', f), 'utf8')
+    const block = t.match(/<table data-document-info>[\s\S]*?<\/table>/)?.[0]
+    if (!block) {
+      problems.push(`examples/${f} 에 data-document-info 표가 없습니다.`)
+      continue
+    }
+    const rows = documentInfoRows(block)
+    if (!hasExpectedLabels(block, rows)) {
+      problems.push(`examples/${f} 의 문서 정보는 표준 순서의 <th>·<td> 쌍 5개여야 합니다.`)
+      continue
+    }
+    for (const [_, label, cell] of rows) {
+      const value = cell.replace(/<!--[\s\S]*?-->/g, '').trim()
+      if (!value || value.includes('[사용자 확인 필요]'))
+        problems.push(`examples/${f} 의 ${label} 행에는 확인된 실제 값을 넣어야 합니다.`)
+      if (label === '작성시간' && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value))
+        problems.push(`examples/${f} 의 작성시간은 24시간제 HH:mm 형식이어야 합니다.`)
+      if (label === '열람 대상' && !APPROVED_AUDIENCES.has(value))
+        problems.push(`examples/${f} 의 열람 대상은 권장 선택지(${[...APPROVED_AUDIENCES].join(', ')}) 중 하나여야 합니다.`)
     }
   }
 }

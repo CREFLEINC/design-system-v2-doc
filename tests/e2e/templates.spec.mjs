@@ -174,11 +174,26 @@ test('deck 템플릿 — 슬라이드당 1페이지, 1440×810pt', async ({ isol
 
   const d = await page.evaluate(() => {
     const el = /** @type {any} */ (document.querySelector('deck-stage'))
+    const info = document.querySelector('.slide.dark table[data-document-info]')
+    const slide = document.querySelector('.slide.dark')
+    const confirmedValues = ['CREFLE 디자인팀', '2026-08-03', '14:30', 'v1.0', '프로젝트 관련자']
+    info?.querySelectorAll('td').forEach((cell, index) => { cell.textContent = confirmedValues[index] })
+    const infoRect = info?.getBoundingClientRect()
+    const slideRect = slide?.getBoundingClientRect()
     return {
       upgraded: !!el?.shadowRoot,
       slides: el?.length,
       charts: document.querySelectorAll('crefle-chart figure').length,
-      chartErrors: document.querySelectorAll('.crefle-chart-error').length
+      chartErrors: document.querySelectorAll('.crefle-chart-error').length,
+      hasDocumentInfo: !!info,
+      documentInfoFits:
+        !!infoRect && !!slideRect &&
+        infoRect.left >= slideRect.left &&
+        infoRect.right <= slideRect.right &&
+        infoRect.top >= slideRect.top &&
+        infoRect.bottom <= slideRect.bottom,
+      documentInfoWidth: infoRect?.width,
+      documentInfoRows: info?.querySelectorAll('tbody tr').length
     }
   })
 
@@ -188,6 +203,36 @@ test('deck 템플릿 — 슬라이드당 1페이지, 1440×810pt', async ({ isol
   expect(d.charts, '덱 템플릿의 차트가 렌더되지 않았다').toBe(1)
   expect(d.chartErrors).toBe(0)
   expect(page.blocked).toEqual([])
+  expect(d.hasDocumentInfo, '덱 표지에 문서 정보 표가 없다').toBe(true)
+  expect(d.documentInfoRows).toBe(5)
+  expect(d.documentInfoFits, '덱 표지의 문서 정보 표가 슬라이드 밖으로 넘친다').toBe(true)
+  expect(d.documentInfoWidth, '덱 표지 문서 정보가 너무 좁어 값이 과도하게 줄바꿈된다').toBeGreaterThanOrEqual(640)
+  expect(d.documentInfoWidth, '덱 표지 문서 정보가 제목 영역을 잠식한다').toBeLessThanOrEqual(900)
+
+  await page.emulateMedia({ media: 'print' })
+  const print = await page.evaluate(() => {
+    const info = document.querySelector('.slide.dark table[data-document-info]')
+    const slide = document.querySelector('.slide.dark')
+    const infoRect = info?.getBoundingClientRect()
+    const slideRect = slide?.getBoundingClientRect()
+    return {
+      documentInfoFits:
+        !!infoRect && !!slideRect &&
+        infoRect.left >= slideRect.left &&
+        infoRect.right <= slideRect.right &&
+        infoRect.top >= slideRect.top &&
+        infoRect.bottom <= slideRect.bottom,
+      documentInfoWidth: infoRect?.width
+    }
+  })
+
+  // PDF 생성 전에 인쇄용 레이아웃을 실측한다. placeholder는 줄바꿈이 비현실적일 수 있어
+  // 사용자 확인 후 들어갈 대표 값으로 바꿔 화면·인쇄 모두 같은 계약을 확인한다.
+  expect(print.documentInfoFits, '인쇄용 덱 표지의 문서 정보 표가 슬라이드 밖으로 넘친다').toBe(true)
+  // print는 1920px 설계 캔버스를 그대로 쓴다. stage의 1760px 중 72%인 1267px가
+  // 정상값이며, 화면의 축소 폭(640–900px)을 그대로 재사용하면 안 된다.
+  expect(print.documentInfoWidth, '인쇄용 덱 표지 문서 정보가 너무 좁어 값이 과도하게 줄바꿈된다').toBeGreaterThanOrEqual(1200)
+  expect(print.documentInfoWidth, '인쇄용 덱 표지 문서 정보가 제목 영역을 잠식한다').toBeLessThanOrEqual(1300)
 
   const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true })
   const raw = pdf.toString('latin1')
