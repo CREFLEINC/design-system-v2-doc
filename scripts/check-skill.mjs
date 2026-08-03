@@ -106,6 +106,19 @@ if (!existsSync(CSS)) {
     if ((block.match(/사용자 확인 전 기입 금지/g) || []).length !== DOCUMENT_INFO_LABELS.length)
       problems.push(`templates/${f} 의 문서 정보 금지 주석이 5개가 아닙니다.`)
   }
+
+  // ── 6) 완료 예제의 문서 정보 계약 — 템플릿과 같은 항목·순서로 실제 값을 보여 준다
+  for (const f of ['deck-minimal.html', 'doc-minimal.html']) {
+    const t = readFileSync(join(ROOT, 'examples', f), 'utf8')
+    const block = t.match(/<table data-document-info>[\s\S]*?<\/table>/)?.[0]
+    if (!block) {
+      problems.push(`examples/${f} 에 data-document-info 표가 없습니다.`)
+      continue
+    }
+    const labels = [...block.matchAll(/<th>([^<]+)<\/th>/g)].map((m) => m[1])
+    if (JSON.stringify(labels) !== JSON.stringify(DOCUMENT_INFO_LABELS))
+      problems.push(`examples/${f} 의 문서 정보 항목 또는 순서가 표준과 다릅니다.`)
+  }
 }
 
 if (problems.length) {
