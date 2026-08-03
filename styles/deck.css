@@ -156,8 +156,8 @@
 
 /* ── 문서 정보 — 타이틀 슬라이드의 작성 메타데이터. ─────────────────────── */
 .slide table[data-document-info] {
-  width: 1280px;
-  max-width: 1584px;
+  width: 72%;
+  max-width: 90%;
   border-collapse: collapse;
   margin: 0;
   font-size: var(--slide-small);
