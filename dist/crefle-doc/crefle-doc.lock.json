@@ -9,7 +9,7 @@
   },
   "files": {
     "crefle-chart.js": "sha256:60fcc3506ef5c91f7751b1c4b0528726510df2da11c7cec15ec0e2eb39d2cd63",
-    "crefle-doc.css": "sha256:9903fe84dcf0c04ba794db5491932bdca0c6c0de54eb603ef748842cc43f059d",
+    "crefle-doc.css": "sha256:a7d186014fcf34207cb3c02cdefd1b8a077af20b57268dc4d4c4f98b7c36bcdb",
     "deck-stage.js": "sha256:867911aa69b71ee9eb9eac0dcf589c311c6b418f7b9e3ca44d26fdd845794e22",
     "fonts/JetBrainsMono-Bold.woff2": "sha256:c503cc5ec5f8b2c7666b7ecda1adf44bd45f2e6579b2eba0fc292150416588a2",
     "fonts/JetBrainsMono-Medium.woff2": "sha256:086c48dfbea9ddaff1320f7e09399b8e2924e88ce67453721255db3bdbb5a353",
