@@ -85,4 +85,13 @@ describe('identity chip token contract', () => {
     expect(result.status).not.toBe(0)
     expect(result.output).toContain('.doc')
   })
+
+  it('ignores comments immediately before a scoped identity-chip selector', () => {
+    const root = makeFixture()
+    const file = join(root, 'styles', 'doc.css')
+    const source = readFileSync(file, 'utf8')
+    writeFileSync(file, source.replace('.doc .identity-chip {', '/* component */\n.doc .identity-chip {'))
+
+    expect(runCheck(root)).toMatchObject({ status: 0 })
+  })
 })

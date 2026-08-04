@@ -343,6 +343,25 @@
   --chart-7: #1baf7a;          /* 아쿠아                                          */
   --chart-8: #eb6834;          /* 오렌지                                          */
 
+  /* identity chip · confidence bar 가 공유하는 categorical 파생 표면.
+     비율을 각 컴포넌트에서 다시 계산하면 같은 정체성이 서로 다른 톤으로 갈라진다. */
+  --chart-1-container: color-mix(in srgb, var(--chart-1) 14%, var(--surface));
+  --chart-1-border: color-mix(in srgb, var(--chart-1) 55%, var(--on-surface));
+  --chart-2-container: color-mix(in srgb, var(--chart-2) 14%, var(--surface));
+  --chart-2-border: color-mix(in srgb, var(--chart-2) 55%, var(--on-surface));
+  --chart-3-container: color-mix(in srgb, var(--chart-3) 14%, var(--surface));
+  --chart-3-border: color-mix(in srgb, var(--chart-3) 55%, var(--on-surface));
+  --chart-4-container: color-mix(in srgb, var(--chart-4) 14%, var(--surface));
+  --chart-4-border: color-mix(in srgb, var(--chart-4) 55%, var(--on-surface));
+  --chart-5-container: color-mix(in srgb, var(--chart-5) 14%, var(--surface));
+  --chart-5-border: color-mix(in srgb, var(--chart-5) 55%, var(--on-surface));
+  --chart-6-container: color-mix(in srgb, var(--chart-6) 14%, var(--surface));
+  --chart-6-border: color-mix(in srgb, var(--chart-6) 55%, var(--on-surface));
+  --chart-7-container: color-mix(in srgb, var(--chart-7) 14%, var(--surface));
+  --chart-7-border: color-mix(in srgb, var(--chart-7) 55%, var(--on-surface));
+  --chart-8-container: color-mix(in srgb, var(--chart-8) 14%, var(--surface));
+  --chart-8-border: color-mix(in srgb, var(--chart-8) 55%, var(--on-surface));
+
   --chart-grid: var(--outline-variant);
   --chart-axis: var(--on-surface-muted);
   /* 마크 사이 간격 — 인접 채움이 붙으면 경계가 사라진다 (dataviz §marks: 2px surface gap) */
@@ -948,6 +967,47 @@
   border-color: transparent;
 }
 
+/* ── Identity · Confidence · Status Chip ────────────────────────────── */
+.doc .identity-chip {
+  --identity-container: var(--surface-container-low);
+  --identity-border: var(--outline-variant);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-1);
+  padding: var(--s-1) var(--s-2);
+  border-width: 1px;
+  border-style: none;
+  border-color: var(--identity-border);
+  border-radius: var(--radius-sm);
+  background: var(--identity-container);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+  color: var(--on-surface);
+  font-size: var(--text-small);
+  font-weight: var(--w-medium);
+  line-height: var(--leading-snug);
+  white-space: nowrap;
+  break-inside: avoid;
+}
+.doc .identity-chip[data-identity='1'] { --identity-container: var(--chart-1-container); --identity-border: var(--chart-1-border); }
+.doc .identity-chip[data-identity='2'] { --identity-container: var(--chart-2-container); --identity-border: var(--chart-2-border); }
+.doc .identity-chip[data-identity='3'] { --identity-container: var(--chart-3-container); --identity-border: var(--chart-3-border); }
+.doc .identity-chip[data-identity='4'] { --identity-container: var(--chart-4-container); --identity-border: var(--chart-4-border); }
+.doc .identity-chip[data-identity='5'] { --identity-container: var(--chart-5-container); --identity-border: var(--chart-5-border); }
+.doc .identity-chip[data-identity='6'] { --identity-container: var(--chart-6-container); --identity-border: var(--chart-6-border); }
+.doc .identity-chip[data-identity='7'] { --identity-container: var(--chart-7-container); --identity-border: var(--chart-7-border); }
+.doc .identity-chip[data-identity='8'] { --identity-container: var(--chart-8-container); --identity-border: var(--chart-8-border); }
+.doc .identity-chip[data-confidence='confirmed'] { border-style: solid; box-shadow: none; }
+.doc .identity-chip[data-confidence='estimated'] { border-style: dashed; box-shadow: none; }
+.doc .identity-chip[data-confidence='unknown'] { border-style: double; box-shadow: none; }
+.doc .identity-chip-status {
+  color: var(--on-surface-variant);
+  font-weight: var(--w-bold);
+}
+.doc .identity-chip[data-change='deprecated'] > .identity-chip-label {
+  color: var(--on-surface-muted);
+  text-decoration: line-through;
+}
+
 /* ── bigquote — 한 문장이 슬라이드 하나를 차지할 때 ────────────────────── */
 .doc .bigquote {
   font-size: var(--text-chapter);
@@ -986,6 +1046,10 @@
   .doc li {
     orphans: 3;
     widows: 3;
+  }
+  .doc .identity-chip {
+    break-inside: avoid;
+    print-color-adjust: exact;
   }
 }
 

@@ -29,7 +29,8 @@ for (let slot = 1; slot <= 8; slot++) {
   }
 }
 
-for (const match of componentCss.matchAll(/([^{}]+identity-chip[^{}]*)\{/g)) {
+const uncommentedComponentCss = componentCss.replaceAll(/\/\*[\s\S]*?\*\//g, '')
+for (const match of uncommentedComponentCss.matchAll(/([^{}]+identity-chip[^{}]*)\{/g)) {
   const selectors = match[1]
     .split(',')
     .map((selector) => selector.trim())
