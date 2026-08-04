@@ -241,6 +241,25 @@
   --chart-7: #1baf7a;          /* 아쿠아                                          */
   --chart-8: #eb6834;          /* 오렌지                                          */
 
+  /* identity chip · confidence bar 가 공유하는 categorical 파생 표면.
+     비율을 각 컴포넌트에서 다시 계산하면 같은 정체성이 서로 다른 톤으로 갈라진다. */
+  --chart-1-container: color-mix(in srgb, var(--chart-1) 14%, var(--surface));
+  --chart-1-border: color-mix(in srgb, var(--chart-1) 55%, var(--on-surface));
+  --chart-2-container: color-mix(in srgb, var(--chart-2) 14%, var(--surface));
+  --chart-2-border: color-mix(in srgb, var(--chart-2) 55%, var(--on-surface));
+  --chart-3-container: color-mix(in srgb, var(--chart-3) 14%, var(--surface));
+  --chart-3-border: color-mix(in srgb, var(--chart-3) 55%, var(--on-surface));
+  --chart-4-container: color-mix(in srgb, var(--chart-4) 14%, var(--surface));
+  --chart-4-border: color-mix(in srgb, var(--chart-4) 55%, var(--on-surface));
+  --chart-5-container: color-mix(in srgb, var(--chart-5) 14%, var(--surface));
+  --chart-5-border: color-mix(in srgb, var(--chart-5) 55%, var(--on-surface));
+  --chart-6-container: color-mix(in srgb, var(--chart-6) 14%, var(--surface));
+  --chart-6-border: color-mix(in srgb, var(--chart-6) 55%, var(--on-surface));
+  --chart-7-container: color-mix(in srgb, var(--chart-7) 14%, var(--surface));
+  --chart-7-border: color-mix(in srgb, var(--chart-7) 55%, var(--on-surface));
+  --chart-8-container: color-mix(in srgb, var(--chart-8) 14%, var(--surface));
+  --chart-8-border: color-mix(in srgb, var(--chart-8) 55%, var(--on-surface));
+
   --chart-grid: var(--outline-variant);
   --chart-axis: var(--on-surface-muted);
   /* 마크 사이 간격 — 인접 채움이 붙으면 경계가 사라진다 (dataviz §marks: 2px surface gap) */
