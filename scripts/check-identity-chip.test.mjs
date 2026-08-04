@@ -7,12 +7,14 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const CHECKER = join(ROOT, 'scripts', 'check-identity-chip.mjs')
+/** @type {string[]} */
 const temporaryRoots = []
 
 function makeFixture() {
   const root = mkdtempSync(join(tmpdir(), 'crefle-identity-chip-'))
   temporaryRoots.push(root)
   cpSync(join(ROOT, 'styles'), join(root, 'styles'), { recursive: true })
+  cpSync(join(ROOT, 'examples'), join(root, 'examples'), { recursive: true })
   return root
 }
 
@@ -93,5 +95,35 @@ describe('identity chip token contract', () => {
     writeFileSync(file, source.replace('.doc .identity-chip {', '/* component */\n.doc .identity-chip {'))
 
     expect(runCheck(root)).toMatchObject({ status: 0 })
+  })
+
+  it('rejects an example missing a confidence value', () => {
+    const root = makeFixture()
+    const file = join(root, 'examples', 'doc-minimal.html')
+    writeFileSync(file, readFileSync(file, 'utf8').replaceAll('data-confidence="unknown"', 'data-confidence="estimated"'))
+
+    const result = runCheck(root)
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('data-confidence="unknown"')
+  })
+
+  it('rejects inaccessible or missing status text', () => {
+    const root = makeFixture()
+    const file = join(root, 'examples', 'doc-minimal.html')
+    writeFileSync(file, readFileSync(file, 'utf8').replace('aria-label="격하">↓', 'aria-label="격하"></span><!--'))
+
+    const result = runCheck(root)
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('격하 ↓')
+  })
+
+  it('rejects deprecated markup without a label wrapper', () => {
+    const root = makeFixture()
+    const file = join(root, 'examples', 'doc-minimal.html')
+    writeFileSync(file, readFileSync(file, 'utf8').replace('class="identity-chip-label"', 'class="legacy-label"'))
+
+    const result = runCheck(root)
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('.identity-chip-label')
   })
 })

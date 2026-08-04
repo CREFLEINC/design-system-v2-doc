@@ -7,6 +7,7 @@ const DEFAULT_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const ROOT = resolve(process.argv[2] ?? DEFAULT_ROOT)
 const tokenCss = readFileSync(join(ROOT, 'styles', 'doc-tokens.css'), 'utf8')
 const componentCss = readFileSync(join(ROOT, 'styles', 'doc.css'), 'utf8')
+const exampleHtml = readFileSync(join(ROOT, 'examples', 'doc-minimal.html'), 'utf8')
 
 /** @type {string[]} */
 const problems = []
@@ -40,10 +41,26 @@ for (const match of uncommentedComponentCss.matchAll(/([^{}]+identity-chip[^{}]*
       problems.push(`identity-chip 은 .doc 안에서만 지원합니다: ${selector}`)
 }
 
+for (let slot = 1; slot <= 8; slot++)
+  if (!exampleHtml.includes(`data-identity="${slot}"`))
+    problems.push(`최소 예제에 data-identity="${slot}" 사용을 포함하세요.`)
+
+for (const confidence of ['confirmed', 'estimated', 'unknown'])
+  if (!exampleHtml.includes(`data-confidence="${confidence}"`))
+    problems.push(`최소 예제에 data-confidence="${confidence}" 사용을 포함하세요.`)
+
+for (const [name, glyph] of [['신설', '✦'], ['폐기', '×'], ['통합', '⊕'], ['이관', '↗'], ['격하', '↓']]) {
+  const statusPattern = new RegExp(`<span class="identity-chip-status" aria-label="${name}">\\s*${glyph}\\s*</span>`)
+  if (!statusPattern.test(exampleHtml)) problems.push(`최소 예제에 ${name} ${glyph} 상태와 aria-label을 포함하세요.`)
+}
+
+if (!/data-change="deprecated"[^>]*>[\s\S]*?<span class="identity-chip-label">/.test(exampleHtml))
+  problems.push('폐기 예제의 라벨을 .identity-chip-label로 감싸세요.')
+
 if (problems.length) {
   console.error('✗ identity chip 계약 검사 실패\n')
   for (const problem of problems) console.error(`  - ${problem}`)
   process.exitCode = 1
 } else {
-  console.log('✓ identity chip 토큰 계약 OK — 8슬롯 × container/border, .doc 전용')
+  console.log('✓ identity chip 계약 OK — 8슬롯, 3 confidence, 5 status, .doc 전용')
 }

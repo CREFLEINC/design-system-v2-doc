@@ -76,6 +76,36 @@ Rule 1 입니다. "양품"은 어디서나 success, "불량"은 어디서나 err
 <span class="label-pill label-after">After</span>
 ```
 
+### 정체성 · 확신도 · 상태 칩
+
+같은 대상을 표·차트·본문에서 반복해 구분할 때 `.identity-chip`을 씁니다. 색은
+정체성, 선 모양은 확신도, 글리프는 변경 상태만 담아 서로의 의미를 섮지 않습니다.
+
+```html
+<span class="identity-chip" data-identity="2" data-confidence="estimated">
+  WEB-01 · 대시보드
+  <span class="identity-chip-status" aria-label="신설">✦</span>
+</span>
+```
+
+- `data-identity="1"`∼`"8"`: 문서 안의 고유 대상. 발행 전에 각 번호가 무엇을
+  뜻하는지 범례를 반드시 함께 제공하세요. 번호의 의미를 문서 간에 가정하지 마세요.
+- `data-confidence="confirmed"`: 확정(실선)
+- `data-confidence="estimated"`: 추정(파선)
+- `data-confidence="unknown"`: 미확인(이중선)
+
+상태는 CSS 장식이 아닌 실제 텍스트로 작성하고, 보조 기술을 위한 `aria-label`을
+붙입니다: 신설 `✦`, 폐기 `×`, 통합 `⊕`, 이관 `↗`, 격하 `↓`.
+
+폐기된 대상은 라벨만 취소선이 가도록 분리합니다.
+
+```html
+<span class="identity-chip" data-identity="4" data-confidence="confirmed" data-change="deprecated">
+  <span class="identity-chip-label">LEGACY-04</span>
+  <span class="identity-chip-status" aria-label="폐기">×</span>
+</span>
+```
+
 ### 각주
 
 Chromium 은 페이지 하단 각주를 지원하지 않습니다. 문서 끝 미주로 씁니다.
