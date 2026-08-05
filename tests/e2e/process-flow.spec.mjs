@@ -56,10 +56,11 @@ async function mountFixture(page) {
 test('process flow — native table 의미와 2~4 lane 구조를 보존한다', async ({ isolatedPage: page }) => {
   await mountFixture(page)
 
-  await expect(page.getByRole('table', { name: '화면 요청 처리 흐름' })).toBeVisible()
-  await expect(page.getByRole('columnheader', { name: 'LANE-WEB-LONG' })).toBeVisible()
-  await expect(page.getByRole('rowheader', { name: /단계 1/ }).first()).toBeVisible()
-  await expect(page.getByLabel('항목 없음').first()).toHaveText('—')
+  const table = page.locator('#four-lanes')
+  await expect(table).toHaveAccessibleName('화면 요청 처리 흐름')
+  await expect(table.getByRole('columnheader', { name: 'LANE-WEB-LONG' })).toBeVisible()
+  await expect(table.getByRole('rowheader', { name: /단계 1/ }).first()).toBeVisible()
+  await expect(table.getByLabel('항목 없음').first()).toHaveText('—')
   expect(await page.locator('#two-lanes thead th').count()).toBe(3)
   expect(await page.locator('#three-lanes thead th').count()).toBe(4)
   expect(await page.locator('#four-lanes thead th').count()).toBe(5)
