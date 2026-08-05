@@ -1092,6 +1092,45 @@
   box-shadow: none;
 }
 
+/* ── 프로세스 흐름 — 단계 × 레인 ──────────────────────────────────────── */
+.doc .process-flow-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.doc .process-flow {
+  width: 100%;
+  min-width: max-content;
+}
+.doc .process-flow tbody th {
+  min-width: var(--grid-min-3);
+  background: var(--surface-container-low);
+}
+.doc .process-flow tbody th strong,
+.doc .process-flow tbody th small {
+  display: block;
+}
+.doc .process-flow-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+.doc .process-flow-empty,
+.doc .process-flow-transition {
+  color: var(--on-surface-muted);
+  font-size: var(--text-small);
+}
+.doc .process-flow-transition {
+  display: block;
+  margin-bottom: var(--s-1);
+  font-weight: var(--w-medium);
+}
+.doc .process-flow td[data-transition='enter'] {
+  border-block-start: 2px solid var(--on-surface);
+}
+.doc .process-flow td[data-transition='exit'] {
+  border-block-end: 2px solid var(--on-surface);
+}
+
 /* ── bigquote — 한 문장이 슬라이드 하나를 차지할 때 ────────────────────── */
 .doc .bigquote {
   font-size: var(--text-chapter);
@@ -1145,6 +1184,29 @@
   .doc .confidence-bar,
   .doc .confidence-segment {
     break-inside: avoid;
+    print-color-adjust: exact;
+  }
+  .doc .process-flow-scroll {
+    overflow: visible;
+  }
+  .doc .process-flow {
+    width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+  }
+  .doc .process-flow thead {
+    display: table-header-group;
+  }
+  .doc .process-flow tbody tr {
+    break-inside: avoid;
+  }
+  .doc .process-flow .identity-chip {
+    max-width: 100%;
+    white-space: normal;
+  }
+  .doc .process-flow,
+  .doc .process-flow td,
+  .doc .process-flow th {
     print-color-adjust: exact;
   }
 }
