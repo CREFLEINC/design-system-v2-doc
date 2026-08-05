@@ -140,6 +140,43 @@ Rule 1 입니다. "양품"은 어디서나 success, "불량"은 어디서나 err
 - 비중은 `aria-label`/`aria-labelledby`와 보이는 범례 또는 인접 텍스트로도 제공하세요.
 - semantic 색·임의 색·불투명도만으로 확신도를 표현하지 마세요.
 
+### 프로세스 흐름 — 단계 × 레인
+
+단계가 순서대로 진행되고 각 시스템·조직의 참여 항목을 함께 비교할 때 씁니다. 단계는
+행, 레인은 열이며 레인은 2∼4개로 제한합니다. 연결선이나 자유 배치가 필요한 경우에는
+이 컴포넌트가 아니라 별도 다이어그램을 사용하세요.
+
+```html
+<div class="process-flow-scroll">
+  <table class="process-flow">
+    <caption>화면 요청 처리 흐름</caption>
+    <thead>
+      <tr><th scope="col">단계</th><th scope="col">WEB</th><th scope="col">API</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row"><strong>접수</strong><small>요청 등록</small></th>
+        <td data-transition="enter">
+          <span class="process-flow-transition">시작</span>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="2" data-confidence="confirmed">WEB-01</span>
+          </div>
+        </td>
+        <td><span class="process-flow-empty" aria-label="항목 없음">—</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+- `.process-flow-scroll`의 바로 아래에 `.process-flow` 표를 둡니다.
+- `<caption>`, 열 머리의 `scope="col"`, 단계 머리의 `scope="row"`는 필수입니다.
+- 실제 항목은 `.process-flow-items` 안에서 `.identity-chip`을 재사용합니다.
+- 빈 셀은 실제 `—` 문자와 `aria-label="항목 없음"`을 함께 씁니다.
+- 진입·종료 셀은 `data-transition="enter"` / `"exit"`와 실제 보이는 `시작` / `종료`
+  텍스트를 `.process-flow-transition`으로 제공합니다.
+- 인쇄 시 표 머리가 반복되고 행은 가능한 한 페이지 사이에서 나뉘지 않습니다.
+
 ### 각주
 
 Chromium 은 페이지 하단 각주를 지원하지 않습니다. 문서 끝 미주로 씁니다.

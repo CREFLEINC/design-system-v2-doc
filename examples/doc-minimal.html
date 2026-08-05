@@ -154,6 +154,64 @@
   <span class="confidence-segment" data-confidence="unknown" style="--segment-size: 15"></span>
 </div>
 
+<h3>프로세스 흐름 — 단계 × 레인</h3>
+<p>범례: identity 2 = 웹 · 4 = POP · 5 = API.</p>
+<div class="process-flow-scroll">
+  <table class="process-flow">
+    <caption>화면 요청 처리 흐름</caption>
+    <thead>
+      <tr>
+        <th scope="col">단계</th>
+        <th scope="col">WEB</th>
+        <th scope="col">POP</th>
+        <th scope="col">API</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th scope="row"><strong>접수</strong><small>요청 등록</small></th>
+        <td data-transition="enter">
+          <span class="process-flow-transition">시작</span>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="2" data-confidence="confirmed">WEB-01</span>
+          </div>
+        </td>
+        <td><span class="process-flow-empty" aria-label="항목 없음">—</span></td>
+        <td>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="5" data-confidence="estimated">API-01</span>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <th scope="row"><strong>처리</strong><small>승인 및 반영</small></th>
+        <td>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="2" data-confidence="estimated">WEB-02</span>
+          </div>
+        </td>
+        <td>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="4" data-confidence="unknown">POP-01</span>
+          </div>
+        </td>
+        <td><span class="process-flow-empty" aria-label="항목 없음">—</span></td>
+      </tr>
+      <tr>
+        <th scope="row"><strong>완료</strong><small>처리 결과 전달</small></th>
+        <td data-transition="exit">
+          <span class="process-flow-transition">종료</span>
+          <div class="process-flow-items">
+            <span class="identity-chip" data-identity="2" data-confidence="confirmed">WEB-03</span>
+          </div>
+        </td>
+        <td><span class="process-flow-empty" aria-label="항목 없음">—</span></td>
+        <td><span class="process-flow-empty" aria-label="항목 없음">—</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <h3>차트</h3>
 <p>차트는 줄길이 제약을 벗어난다 — 데이터는 넓어야 읽힌다.</p>
 <crefle-chart type="bar" title="난이도별 품질 점수 개선" caption="출처: Hwang, M. (2026)" unit="점">
