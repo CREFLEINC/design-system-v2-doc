@@ -141,6 +141,19 @@
   <span class="identity-chip" data-identity="8" data-confidence="estimated">EXT-08</span>
 </p>
 
+<h3>경량 크기 미터</h3>
+<label for="blocked-screens">차단 화면: 8 / 12</label>
+<meter id="blocked-screens" class="magnitude-meter" min="0" max="12" value="8">8 / 12</meter>
+
+<h3>확신도 세그먼트 바</h3>
+<p>범례: identity 2 = 웹. 확정 60% · 추정 25% · 미확인 15%.</p>
+<div class="confidence-bar" data-identity="2" role="img"
+     aria-label="웹: 확정 60%, 추정 25%, 미확인 15%">
+  <span class="confidence-segment" data-confidence="confirmed" style="--segment-size: 60"></span>
+  <span class="confidence-segment" data-confidence="estimated" style="--segment-size: 25"></span>
+  <span class="confidence-segment" data-confidence="unknown" style="--segment-size: 15"></span>
+</div>
+
 <h3>차트</h3>
 <p>차트는 줄길이 제약을 벗어난다 — 데이터는 넓어야 읽힌다.</p>
 <crefle-chart type="bar" title="난이도별 품질 점수 개선" caption="출처: Hwang, M. (2026)" unit="점">

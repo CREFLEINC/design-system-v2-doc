@@ -10,17 +10,15 @@ const CHECKER = join(ROOT, 'scripts', 'check-compact-bars.mjs')
 /** @type {string[]} */
 const temporaryRoots = []
 
-const COMPLETE_CSS = `
-.doc .magnitude-meter { color: var(--on-surface-muted); }
-.doc .confidence-bar { display: flex; }
-.doc .confidence-segment { flex: var(--segment-size, 0) 1 0; }
-${Array.from({ length: 8 }, (_, index) => {
-  const slot = index + 1
-  return `.doc .confidence-bar[data-identity='${slot}'] { --confidence-container: var(--chart-${slot}-container); --confidence-border: var(--chart-${slot}-border); }`
-}).join('\n')}
-.doc .confidence-segment[data-confidence='confirmed'] { border-style: solid; }
-.doc .confidence-segment[data-confidence='estimated'] { border-style: double; }
-.doc .confidence-segment[data-confidence='unknown'] { border-style: dashed; }
+const CANONICAL_EXAMPLE = `
+<label for="blocked-screens">차단 화면: 8 / 12</label>
+<meter id="blocked-screens" class="magnitude-meter" min="0" max="12" value="8">8 / 12</meter>
+<div class="confidence-bar" data-identity="2" role="img"
+     aria-label="웹: 확정 60%, 추정 25%, 미확인 15%">
+  <span class="confidence-segment" data-confidence="confirmed" style="--segment-size: 60"></span>
+  <span class="confidence-segment" data-confidence="estimated" style="--segment-size: 25"></span>
+  <span class="confidence-segment" data-confidence="unknown" style="--segment-size: 15"></span>
+</div>
 `
 
 function makeFixture(css = '') {
@@ -50,6 +48,16 @@ function runCheck(root = ROOT) {
   }
 }
 
+/** @param {string} root @param {string} example */
+function setCompactExample(root, example = CANONICAL_EXAMPLE) {
+  const file = join(root, 'examples', 'doc-minimal.html')
+  const source = readFileSync(file, 'utf8')
+  writeFileSync(
+    file,
+    source.replace(/<h3>경량 크기 미터<\/h3>[\s\S]*?<\/div>/, example)
+  )
+}
+
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) rmSync(root, { recursive: true, force: true })
 })
@@ -60,11 +68,11 @@ describe('compact bar public contract', () => {
   })
 
   it('accepts a complete component contract', () => {
-    expect(runCheck(makeFixture(COMPLETE_CSS))).toMatchObject({ status: 0 })
+    expect(runCheck(makeFixture())).toMatchObject({ status: 0 })
   })
 
   it('rejects a compact bar selector outside .doc', () => {
-    const result = runCheck(makeFixture(`${COMPLETE_CSS}\n.slide .confidence-bar { display: flex; }\n`))
+    const result = runCheck(makeFixture('\n.slide .confidence-bar { display: flex; }\n'))
 
     expect(result.status).not.toBe(0)
     expect(result.output).toContain('.doc')
@@ -76,7 +84,10 @@ describe('compact bar public contract', () => {
       const rule = new RegExp(
         `\\.doc \\.confidence-segment\\[data-confidence='${confidence}'\\] \\{[^}]+\\}`
       )
-      const result = runCheck(makeFixture(COMPLETE_CSS.replace(rule, '')))
+      const root = makeFixture()
+      const file = join(root, 'styles', 'doc.css')
+      writeFileSync(file, readFileSync(file, 'utf8').replace(rule, ''))
+      const result = runCheck(root)
 
       expect(result.status).not.toBe(0)
       expect(result.output).toContain(confidence)
@@ -85,7 +96,7 @@ describe('compact bar public contract', () => {
 
   it('rejects semantic color use in magnitude meter rules', () => {
     const result = runCheck(
-      makeFixture(`${COMPLETE_CSS}\n.doc .magnitude-meter { color: var(--semantic-success); }\n`)
+      makeFixture('\n.doc .magnitude-meter { color: var(--semantic-success); }\n')
     )
 
     expect(result.status).not.toBe(0)
@@ -93,11 +104,60 @@ describe('compact bar public contract', () => {
   })
 
   it('rejects a missing identity derivative mapping', () => {
-    const result = runCheck(
-      makeFixture(COMPLETE_CSS.replace('--chart-8-border', '--outline-variant'))
-    )
+    const root = makeFixture()
+    const file = join(root, 'styles', 'doc.css')
+    writeFileSync(file, readFileSync(file, 'utf8').replaceAll('--chart-8-border', '--outline-variant'))
+    const mutatedResult = runCheck(root)
+
+    expect(mutatedResult.status).not.toBe(0)
+    expect(mutatedResult.output).toContain('--chart-8-border')
+  })
+
+  it.each(['min="0"', 'max="12"', 'value="8"'])(
+    'rejects a magnitude example without %s',
+    (attribute) => {
+      const root = makeFixture()
+      setCompactExample(root, CANONICAL_EXAMPLE.replace(attribute, ''))
+      const result = runCheck(root)
+
+      expect(result.status).not.toBe(0)
+      expect(result.output).toContain(attribute.split('=')[0])
+    }
+  )
+
+  it('rejects a magnitude example without a label association', () => {
+    const root = makeFixture()
+    setCompactExample(root, CANONICAL_EXAMPLE.replace('for="blocked-screens"', ''))
+    const result = runCheck(root)
 
     expect(result.status).not.toBe(0)
-    expect(result.output).toContain('--chart-8-border')
+    expect(result.output).toContain('label')
+  })
+
+  it('rejects a confidence example without an accessible summary', () => {
+    const root = makeFixture()
+    setCompactExample(root, CANONICAL_EXAMPLE.replace(/\s+aria-label="[^"]+"/, ''))
+    const result = runCheck(root)
+
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('accessible summary')
+  })
+
+  it('rejects a confidence example without the unknown state', () => {
+    const root = makeFixture()
+    setCompactExample(root, CANONICAL_EXAMPLE.replace('data-confidence="unknown"', 'data-confidence="estimated"'))
+    const result = runCheck(root)
+
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('unknown')
+  })
+
+  it('rejects a confidence segment without --segment-size', () => {
+    const root = makeFixture()
+    setCompactExample(root, CANONICAL_EXAMPLE.replace('style="--segment-size: 15"', ''))
+    const result = runCheck(root)
+
+    expect(result.status).not.toBe(0)
+    expect(result.output).toContain('--segment-size')
   })
 })

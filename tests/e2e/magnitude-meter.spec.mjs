@@ -32,7 +32,7 @@ async function mountFixture(page) {
 test('magnitude meter — native 값과 접근성 이름을 보존한다', async ({ isolatedPage: page }) => {
   await mountFixture(page)
 
-  const meter = page.getByLabel('차단 화면')
+  const meter = page.getByLabel('차단 화면', { exact: true })
   await expect(meter).toBeVisible()
   await expect(meter).toHaveJSProperty('min', 0)
   await expect(meter).toHaveJSProperty('max', 12)

@@ -106,6 +106,40 @@ Rule 1 입니다. "양품"은 어디서나 success, "불량"은 어디서나 err
 </span>
 ```
 
+### 경량 크기 미터
+
+목록이나 카드에서 값의 상대적 크기를 빠르게 스캔할 때 native `<meter>`를 씁니다.
+정확한 수치는 반드시 텍스트로도 적고, 판정·상태와 혼동하지 않게 semantic·identity 색을
+쓰지 마세요.
+
+```html
+<label for="blocked-screens">차단 화면: 8 / 12</label>
+<meter id="blocked-screens" class="magnitude-meter" min="0" max="12" value="8">8 / 12</meter>
+```
+
+`min`, `max`, `value`와 `<label for>` 또는 `aria-label`이 필수입니다. Pass/Fail은 미터가
+아니라 semantic 콜아웃으로 표현하세요.
+
+### 확신도 세그먼트 바
+
+하나의 identity 안에서 확정·추정·미확인 비중을 나눌 때 씁니다. 여러 카테고리
+비교는 `<crefle-chart>`의 역할입니다.
+
+```html
+<div class="confidence-bar" data-identity="2" role="img"
+     aria-label="웹: 확정 60%, 추정 25%, 미확인 15%">
+  <span class="confidence-segment" data-confidence="confirmed" style="--segment-size: 60"></span>
+  <span class="confidence-segment" data-confidence="estimated" style="--segment-size: 25"></span>
+  <span class="confidence-segment" data-confidence="unknown" style="--segment-size: 15"></span>
+</div>
+```
+
+- `--segment-size`는 0 이상의 상대 가중치입니다. 합계를 100으로 맞출 필요는 없습니다.
+- identity 번호의 뜻을 근처 범례에서 설명하세요.
+- 확신도는 확정(실선 채움), 추정(해칭+이중선), 미확인(점선 윤곽)으로 표현됩니다.
+- 비중은 `aria-label`/`aria-labelledby`와 보이는 범례 또는 인접 텍스트로도 제공하세요.
+- semantic 색·임의 색·불투명도만으로 확신도를 표현하지 마세요.
+
 ### 각주
 
 Chromium 은 페이지 하단 각주를 지원하지 않습니다. 문서 끝 미주로 씁니다.
