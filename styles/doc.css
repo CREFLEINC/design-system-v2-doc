@@ -508,6 +508,60 @@
   opacity: 0.55;
 }
 
+/* ── Identity 확신도 세그먼트 바 ─────────────────────────────────────── */
+.doc .confidence-bar {
+  --confidence-container: var(--surface-container-low);
+  --confidence-border: var(--outline-variant);
+  display: flex;
+  gap: 1px;
+  width: 100%;
+  height: var(--s-4);
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background: var(--surface-container);
+  break-inside: avoid;
+}
+.doc .confidence-segment {
+  --segment-size: 0;
+  flex: var(--segment-size) 1 0%;
+  min-width: 0;
+  border: 1px none var(--outline-variant);
+  background: var(--surface-container-low);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+}
+.doc .confidence-bar[data-identity='1'] { --confidence-container: var(--chart-1-container); --confidence-border: var(--chart-1-border); }
+.doc .confidence-bar[data-identity='2'] { --confidence-container: var(--chart-2-container); --confidence-border: var(--chart-2-border); }
+.doc .confidence-bar[data-identity='3'] { --confidence-container: var(--chart-3-container); --confidence-border: var(--chart-3-border); }
+.doc .confidence-bar[data-identity='4'] { --confidence-container: var(--chart-4-container); --confidence-border: var(--chart-4-border); }
+.doc .confidence-bar[data-identity='5'] { --confidence-container: var(--chart-5-container); --confidence-border: var(--chart-5-border); }
+.doc .confidence-bar[data-identity='6'] { --confidence-container: var(--chart-6-container); --confidence-border: var(--chart-6-border); }
+.doc .confidence-bar[data-identity='7'] { --confidence-container: var(--chart-7-container); --confidence-border: var(--chart-7-border); }
+.doc .confidence-bar[data-identity='8'] { --confidence-container: var(--chart-8-container); --confidence-border: var(--chart-8-border); }
+.doc .confidence-segment[data-confidence='confirmed'] {
+  border-style: solid;
+  border-color: var(--confidence-border);
+  background: var(--confidence-container);
+  box-shadow: none;
+}
+.doc .confidence-segment[data-confidence='estimated'] {
+  border-width: 2px;
+  border-style: double;
+  border-color: var(--confidence-border);
+  background-color: var(--confidence-container);
+  background-image: repeating-linear-gradient(
+    45deg,
+    var(--on-surface-muted) 0 1px,
+    transparent 1px var(--s-1)
+  );
+  box-shadow: none;
+}
+.doc .confidence-segment[data-confidence='unknown'] {
+  border-style: dashed;
+  border-color: var(--confidence-border);
+  background: transparent;
+  box-shadow: none;
+}
+
 /* ── bigquote — 한 문장이 슬라이드 하나를 차지할 때 ────────────────────── */
 .doc .bigquote {
   font-size: var(--text-chapter);
@@ -555,6 +609,11 @@
   .doc .magnitude-meter::-webkit-meter-bar,
   .doc .magnitude-meter::-webkit-meter-optimum-value,
   .doc .magnitude-meter::-moz-meter-bar {
+    break-inside: avoid;
+    print-color-adjust: exact;
+  }
+  .doc .confidence-bar,
+  .doc .confidence-segment {
     break-inside: avoid;
     print-color-adjust: exact;
   }
