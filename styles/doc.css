@@ -478,6 +478,36 @@
   text-decoration: line-through;
 }
 
+/* ── 경량 매그니튜드 미터 ───────────────────────────────────────── */
+.doc .magnitude-meter {
+  display: block;
+  width: 100%;
+  height: var(--s-2);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-pill);
+  background: var(--surface-container);
+  accent-color: var(--on-surface-muted);
+  break-inside: avoid;
+  appearance: none;
+}
+.doc .magnitude-meter::-webkit-meter-bar {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-pill);
+  background: var(--surface-container);
+}
+.doc .magnitude-meter::-webkit-meter-optimum-value {
+  border-right: 1px solid var(--on-surface-muted);
+  border-radius: var(--radius-pill);
+  background: var(--on-surface-muted);
+  opacity: 0.55;
+}
+.doc .magnitude-meter::-moz-meter-bar {
+  border: 1px solid var(--on-surface-muted);
+  border-radius: var(--radius-pill);
+  background: var(--on-surface-muted);
+  opacity: 0.55;
+}
+
 /* ── bigquote — 한 문장이 슬라이드 하나를 차지할 때 ────────────────────── */
 .doc .bigquote {
   font-size: var(--text-chapter);
@@ -518,6 +548,13 @@
     widows: 3;
   }
   .doc .identity-chip {
+    break-inside: avoid;
+    print-color-adjust: exact;
+  }
+  .doc .magnitude-meter,
+  .doc .magnitude-meter::-webkit-meter-bar,
+  .doc .magnitude-meter::-webkit-meter-optimum-value,
+  .doc .magnitude-meter::-moz-meter-bar {
     break-inside: avoid;
     print-color-adjust: exact;
   }
